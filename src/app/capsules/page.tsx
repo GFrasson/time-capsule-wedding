@@ -1,6 +1,6 @@
 import { Timeline, TimelineItem } from '@/components/ui/timeline'
 import { CapsuleCard } from '@/components/capsule-card'
-import { CapsuleHeader } from '@/components/capsule-header'
+import { CapsuleHeader } from '@/app/capsules/components/capsule-header'
 import Link from 'next/link'
 
 // Mock Data
@@ -51,16 +51,15 @@ export default async function CapsulesPage() {
 
   return (
     <div className="bg-zinc-50 min-h-screen">
-      <CapsuleHeader
-        coupleNames="Sophie & Jack"
-        weddingDate="September 12, 2023"
-        daysCount={345}
-        capsulesCount={12}
-        momentsCount={89}
-        backgroundImageUrl="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2940&auto=format&fit=crop"
-      />
-
-      <main className="container mx-auto px-4 py-12 md:px-8 max-w-5xl">
+      <main className="container mx-auto px-4 pb-12 md:px-8 max-w-3xl">
+        <CapsuleHeader
+          coupleNames="Sophie & Jack"
+          weddingDate="September 12, 2023"
+          daysCount={345}
+          capsulesCount={12}
+          momentsCount={89}
+          backgroundImageUrl="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2940&auto=format&fit=crop"
+        />
         <Timeline>
           {CAPSULES.map((capsule, index) => (
             <TimelineItem key={capsule.id} side={index % 2 === 0 ? 'right' : 'left'} date={capsule.displayDate}>
