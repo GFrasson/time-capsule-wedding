@@ -16,4 +16,20 @@ model Message {
   mediaUrl  String?  // URL to media
   sender    String?
   createdAt DateTime @default(now())
+  
+  capsuleId String
+  capsule   Capsule @relation(fields: [capsuleId], references: [id])
+}
+
+model Capsule {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("LOCKED") // LOCKED, UNLOCKED
+  unlockDate  DateTime
+  coverUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  messages    Message[]
 }

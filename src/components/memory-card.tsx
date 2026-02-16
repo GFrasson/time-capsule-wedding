@@ -2,13 +2,15 @@ import { UnlockedCard } from "./unlocked-card"
 import { LockedCard } from "./locked-card"
 import { PostCard } from "./post-card"
 
+export type PostStatus = 'LOCKED' | 'UNLOCKED'
+
 export type Post = {
   id: string
   title: string
   description: string
   mediaUrl: string
   displayDate: string
-  status?: 'LOCKED' | 'UNLOCKED'
+  status?: PostStatus
   type: string
 }
 

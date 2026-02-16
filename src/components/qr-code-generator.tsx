@@ -6,13 +6,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
 
-export function QRCodeGenerator() {
+interface QRCodeGeneratorProps {
+  capsuleId: string
+}
+
+export function QRCodeGenerator({ capsuleId }: QRCodeGeneratorProps) {
   const [url, setUrl] = useState('')
 
   useEffect(() => {
-    // Generate URL for the upload page
-    setUrl(`${window.location.origin}/upload`)
-  }, [])
+    // Generate URL for the upload page with capsuleId
+    setUrl(`${window.location.origin}/${capsuleId}/upload`)
+  }, [capsuleId])
 
   if (!url) return null
 

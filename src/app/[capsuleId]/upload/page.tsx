@@ -1,6 +1,13 @@
 import { UploadForm } from '@/components/upload-form'
+import { use } from 'react'
 
-export default function UploadPage() {
+interface UploadPageProps {
+  params: Promise<{ capsuleId: string }>
+}
+
+export default function UploadPage({ params }: UploadPageProps) {
+  const { capsuleId } = use(params)
+
   return (
     <main className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -10,7 +17,7 @@ export default function UploadPage() {
         <p className="text-center text-zinc-600 mb-8 max-w-sm mx-auto">
           Compartilhe um momento especial com os noivos. Sua mensagem será guardada com carinho.
         </p>
-        <UploadForm />
+        <UploadForm capsuleId={capsuleId} />
       </div>
     </main>
   )

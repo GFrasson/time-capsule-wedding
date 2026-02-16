@@ -8,7 +8,13 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-export async function POST(request: Request) {
+interface Params {
+  capsuleId: string
+}
+
+export async function POST(request: Request, { params }: { params: Params }) {
+  const { capsuleId } = params
+
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File | null
@@ -50,6 +56,7 @@ export async function POST(request: Request) {
         content: content || '',
         mediaUrl: mediaUrl,
         type: mediaType,
+        capsuleId: capsuleId,
       },
     })
 

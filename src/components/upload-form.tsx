@@ -6,10 +6,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Camera, Upload, Loader2, Send } from 'lucide-react'
+import { Upload, Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 
-export function UploadForm() {
+interface UploadFormProps {
+  capsuleId?: string
+}
+
+export function UploadForm({ capsuleId }: UploadFormProps) {
   const [isUploading, setIsUploading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -67,6 +71,7 @@ export function UploadForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
+          <input type="hidden" name="capsuleId" value={capsuleId || ''} />
           <div className="space-y-2">
             <Label htmlFor="sender" className="text-zinc-600">Seu Nome</Label>
             <Input id="sender" name="sender" placeholder="Ex: Tio João" required className="bg-zinc-50" />
