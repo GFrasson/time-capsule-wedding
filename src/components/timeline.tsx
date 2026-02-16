@@ -38,7 +38,11 @@ export function Timeline() {
   }
 
   if (loading) {
-    return <div className="flex justify-center p-8"><Loader2 className="animate-spin text-zinc-400" /></div>
+    return (
+      <div className="flex justify-center p-8">
+        <Loader2 className="animate-spin text-zinc-400" />
+      </div>
+    )
   }
 
   if (posts.length === 0) {

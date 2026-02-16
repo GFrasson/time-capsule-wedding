@@ -2,13 +2,12 @@ import { Card } from "./ui/card"
 import { twMerge } from "tailwind-merge"
 import { Lock } from "lucide-react"
 
-interface LockedCapsuleCardProps {
+interface LockedCardProps {
   title: string
   description: string
-  imageUrl: string
 }
 
-export function LockedCapsuleCard({ title, description }: LockedCapsuleCardProps) {
+export function LockedCard({ title, description }: LockedCardProps) {
   const days = 245
   const hours = 12
 
