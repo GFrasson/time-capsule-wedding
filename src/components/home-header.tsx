@@ -38,7 +38,7 @@ export function HomeHeader({
 
       <div className="absolute bottom-0 left-0 w-full z-20 text-center flex flex-col items-center gap-2 p-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
         <div className="bg-white/20 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/30 text-xs font-medium uppercase tracking-widest mb-4">
-          Est. {weddingDate}
+          Desde {weddingDate}
         </div>
 
         <h1 className="text-4xl md:text-5xl font-light tracking-tight font-sans drop-shadow-lg">
@@ -46,15 +46,15 @@ export function HomeHeader({
         </h1>
 
         <p className="text-white/90 text-sm font-medium tracking-widest uppercase opacity-80">
-          Our Forever Timeline
+          Nossa história eterna
         </p>
 
         <div className="flex justify-center mt-6 gap-6 text-white/80">
-          <StatItem label="Days" value={daysCount} />
+          <StatItem label="Dias" value={daysCount} />
           <VerticalDivider />
-          <StatItem label="Capsules" value={capsulesCount} />
+          <StatItem label="Cápsulas" value={capsulesCount} />
           <VerticalDivider />
-          <StatItem label="Moments" value={momentsCount} />
+          <StatItem label="Momentos" value={momentsCount} />
         </div>
       </div>
     </header>
