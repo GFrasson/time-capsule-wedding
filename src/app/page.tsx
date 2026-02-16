@@ -27,8 +27,8 @@ export default function Home() {
 
       <div className="fixed bottom-6 right-6 z-20">
         <Link href="/upload">
-          <Button size="lg" className="rounded-full w-14 h-14 shadow-lg bg-zinc-900 hover:bg-zinc-800 transition-transform hover:scale-105 flex items-center justify-center p-0">
-            <PlusCircle className="w-8 h-8 text-white" />
+          <Button size="lg" className="rounded-full w-12 h-12 shadow-lg bg-primary hover:bg-primary/90 transition-transform hover:scale-105 flex items-center justify-center p-0">
+            <PlusCircle className="w-12 h-12 text-white" />
             <span className="sr-only">Adicionar</span>
           </Button>
         </Link>
