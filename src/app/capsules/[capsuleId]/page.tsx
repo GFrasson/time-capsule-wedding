@@ -34,12 +34,12 @@ export default async function CapsuleDetailPage({ params }: CapsuleDetailPagePro
 
   const posts: Post[] = messages.map((message: Message) => ({
     id: message.id,
-    title: message.title ?? undefined,
-    description: message.content ?? undefined,
+    title: message.title ?? "",
+    description: message.content ?? "",
     mediaUrl: message.mediaUrl ?? "",
     displayDate: message.createdAt.toISOString(),
     type: message.type,
-    author: message.sender ?? undefined,
+    author: message.sender ?? "",
   }))
 
   if (!capsule) {
