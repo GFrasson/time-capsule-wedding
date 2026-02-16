@@ -11,7 +11,7 @@ interface Capsule {
   description?: string;
   status?: string;
   coverUrl?: string;
-  unlockDate?: Date;
+  unlockDate: Date;
 }
 
 async function getCapsules(): Promise<Post[]> {
