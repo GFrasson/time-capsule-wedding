@@ -76,7 +76,7 @@ export function Timeline() {
             )}
             {post.content && (
               <div className="p-4">
-                <p className="text-zinc-700 whitespace-pre-wrap font-serif text-lg leading-relaxed">{post.content}</p>
+                <p className="text-zinc-700 whitespace-pre-wrap text-lg leading-relaxed">{post.content}</p>
               </div>
             )}
           </CardContent>

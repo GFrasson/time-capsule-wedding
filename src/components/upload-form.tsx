@@ -61,7 +61,7 @@ export function UploadForm() {
   return (
     <Card className="w-full max-w-md mx-auto shadow-lg border-zinc-100">
       <CardHeader>
-        <CardTitle className="text-2xl font-serif text-center text-zinc-800">
+        <CardTitle className="text-2xl text-center text-zinc-800">
           Deixe sua mensagem
         </CardTitle>
       </CardHeader>

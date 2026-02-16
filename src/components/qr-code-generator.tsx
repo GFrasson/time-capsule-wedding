@@ -19,7 +19,7 @@ export function QRCodeGenerator() {
   return (
     <Card className="max-w-sm mx-auto border-zinc-200 shadow-lg print:shadow-none print:border-none">
       <CardHeader className="text-center">
-        <CardTitle className="font-serif text-2xl">Cápsula do Tempo</CardTitle>
+        <CardTitle className="text-2xl">Cápsula do Tempo</CardTitle>
         <CardDescription>Escaneie para deixar uma mensagem</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center gap-6">
