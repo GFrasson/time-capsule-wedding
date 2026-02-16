@@ -19,14 +19,14 @@ export function PostCard({ title, description, mediaUrl, type, author }: PostCar
       {type.includes('VIDEO') ? (
         <video
           controls
-          className="w-full h-64 sm:h-80 object-cover overflow-hidden"
+          className="w-full h-auto object-cover overflow-hidden"
           src={mediaUrl}
         />
       ) : (
         <Image
           src={mediaUrl}
           alt={title || 'User upload'}
-          className="w-full h-64 sm:h-80 object-cover overflow-hidden"
+          className="w-full h-auto object-cover overflow-hidden"
           width={1000}
           height={1000}
         />
