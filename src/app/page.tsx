@@ -18,7 +18,13 @@ async function getCapsules(): Promise<Post[]> {
     description: capsule.description ?? '',
     status: capsule.status as PostStatus,
     mediaUrl: capsule.coverUrl ?? '',
-    displayDate: capsule.unlockDate.toLocaleDateString('pt-BR', { month: 'short', day: 'numeric', year: 'numeric' }),
+    displayDate: capsule.unlockDate.toLocaleDateString('pt-BR',
+      {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        timeZone: 'UTC'
+      }),
     type: 'image',
   }))
 }

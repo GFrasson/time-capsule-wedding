@@ -1,4 +1,5 @@
 import { MemoryCard, Post } from "@/components/memory-card"
+import { FormattedDate } from "@/components/formatted-date"
 import { TimelineItem, TimelineRoot } from "@/components/timeline"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Share2 } from "lucide-react"
@@ -61,7 +62,7 @@ export default async function CapsuleDetailPage({ params }: CapsuleDetailPagePro
               <TimelineItem
                 key={post.id}
                 side="left"
-                date={`${new Date(post.displayDate).toLocaleDateString()} às ${new Date(post.displayDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`}
+                date={<FormattedDate date={post.displayDate} />}
               >
                 <MemoryCard post={post} />
               </TimelineItem>
