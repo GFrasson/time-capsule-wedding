@@ -15,7 +15,7 @@ export function QRCodeGenerator({ capsuleId }: QRCodeGeneratorProps) {
 
   useEffect(() => {
     // Generate URL for the upload page with capsuleId
-    setUrl(`${window.location.origin}/${capsuleId}/upload`)
+    setUrl(`${window.location.origin}/capsules/${capsuleId}/upload`)
   }, [capsuleId])
 
   if (!url) return null
