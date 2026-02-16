@@ -5,6 +5,15 @@ import { PostsTimeline } from '@/components/posts-timeline'
 
 import prisma from '@/lib/prisma'
 
+interface Capsule {
+  id: string;
+  title: string;
+  description?: string;
+  status?: string;
+  coverUrl?: string;
+  unlockDate?: Date;
+}
+
 async function getCapsules(): Promise<Post[]> {
   const capsules = await prisma.capsule.findMany({
     orderBy: {
@@ -12,7 +21,7 @@ async function getCapsules(): Promise<Post[]> {
     },
   })
 
-  return capsules.map((capsule) => ({
+  return capsules.map((capsule: Capsule) => ({
     id: capsule.id,
     title: capsule.title,
     description: capsule.description ?? '',
