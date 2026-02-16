@@ -4,14 +4,14 @@ import Image from "next/image"
 import Link from "next/link"
 
 interface UnlockedCardProps {
-  title: string
-  description: string
-  mediaUrl: string
+  title?: string
+  description?: string
+  mediaUrl?: string
   link: string
   onClick?: () => void
 }
 
-export function UnlockedCard({ title, description, mediaUrl, link, onClick }: UnlockedCardProps) {
+export function UnlockedCard({ title = 'Sem título', description = '', mediaUrl = '', link, onClick }: UnlockedCardProps) {
   return (
     <Link
       href={link}

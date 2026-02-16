@@ -3,11 +3,11 @@ import { twMerge } from "tailwind-merge"
 import { Lock } from "lucide-react"
 
 interface LockedCardProps {
-  title: string
-  description: string
+  title?: string
+  description?: string
 }
 
-export function LockedCard({ title, description }: LockedCardProps) {
+export function LockedCard({ title = 'Sem título', description = '' }: LockedCardProps) {
   const days = 245
   const hours = 12
 

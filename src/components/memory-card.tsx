@@ -6,12 +6,13 @@ export type PostStatus = 'LOCKED' | 'UNLOCKED'
 
 export type Post = {
   id: string
-  title: string
-  description: string
+  title?: string
+  description?: string
   mediaUrl: string
   displayDate: string
   status?: PostStatus
   type: string
+  author?: string
 }
 
 export type MemoryCardProps = {
@@ -25,6 +26,7 @@ export function MemoryCard({ post }: MemoryCardProps) {
       description={post.description}
       mediaUrl={post.mediaUrl}
       type={post.type}
+      author={post.author}
     />
   }
 

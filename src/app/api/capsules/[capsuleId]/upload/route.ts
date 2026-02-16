@@ -23,12 +23,13 @@ export async function POST(
     const file = formData.get('file') as File | null
     const sender = formData.get('sender') as string
     const content = formData.get('content') as string
+    const title = formData.get('title') as string
 
-    if (!sender && !content && !file) {
-      return NextResponse.json({ error: 'Empty submission' }, { status: 400 })
+    if (!file || file.size === 0) {
+      return NextResponse.json({ error: 'File is required' }, { status: 400 })
     }
 
-    let mediaUrl = null
+    let mediaUrl = ''
     let mediaType = 'TEXT'
 
     if (file && file.size > 0) {
@@ -55,8 +56,9 @@ export async function POST(
 
     const message = await prisma.message.create({
       data: {
-        sender: sender || 'Anônimo',
-        content: content || '',
+        sender: sender || null,
+        content: content || null,
+        title: title || null,
         mediaUrl: mediaUrl,
         type: mediaType,
         capsuleId: capsuleId,

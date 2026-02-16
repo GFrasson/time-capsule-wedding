@@ -73,12 +73,17 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <input type="hidden" name="capsuleId" value={capsuleId || ''} />
           <div className="space-y-2">
-            <Label htmlFor="sender" className="text-zinc-600">Seu Nome</Label>
-            <Input id="sender" name="sender" placeholder="Ex: Tio João" required className="bg-zinc-50" />
+            <Label htmlFor="title" className="text-zinc-600">Título (Opcional)</Label>
+            <Input id="title" name="title" placeholder="Ex: Lembrança da Praia" className="bg-zinc-50" />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="content" className="text-zinc-600">Mensagem</Label>
+            <Label htmlFor="sender" className="text-zinc-600">Seu Nome (Opcional)</Label>
+            <Input id="sender" name="sender" placeholder="Ex: Tio João" className="bg-zinc-50" />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="content" className="text-zinc-600">Mensagem (Opcional)</Label>
             <Textarea
               id="content"
               name="content"
@@ -88,7 +93,7 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-zinc-600 block">Foto ou Vídeo (Opcional)</Label>
+            <Label className="text-zinc-600 block">Foto ou Vídeo (Obrigatório)</Label>
             <div className="flex items-center gap-4">
               <Input
                 id="file"

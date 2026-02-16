@@ -11,12 +11,13 @@ datasource db {
 
 model Message {
   id        String   @id @default(cuid())
-  type      String   // TEXT, IMAGE, VIDEO
-  content   String?  // Text content
-  mediaUrl  String?  // URL to media
+  type      String // TEXT, IMAGE, VIDEO
+  content   String? // Text content
+  title     String? // Title of the message
+  mediaUrl  String // URL to media (Required)
   sender    String?
   createdAt DateTime @default(now())
-  
+
   capsuleId String
   capsule   Capsule @relation(fields: [capsuleId], references: [id])
 }
@@ -30,6 +31,6 @@ model Capsule {
   coverUrl    String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  
-  messages    Message[]
+
+  messages Message[]
 }
