@@ -1,10 +1,9 @@
 import { Post, PostStatus } from '@/components/memory-card'
-import { PrismaClient } from '@prisma/client'
 
 import { HomeHeader } from '../components/home-header'
 import { PostsTimeline } from '@/components/posts-timeline'
 
-const prisma = new PrismaClient()
+import prisma from '@/lib/prisma'
 
 async function getCapsules(): Promise<Post[]> {
   const capsules = await prisma.capsule.findMany({
@@ -23,7 +22,6 @@ async function getCapsules(): Promise<Post[]> {
     type: 'image',
   }))
 }
-
 
 export default async function Home() {
   const capsules = await getCapsules()

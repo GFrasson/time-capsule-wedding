@@ -42,7 +42,7 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
     const formData = new FormData(e.currentTarget)
 
     try {
-      const response = await fetch('/api/upload', {
+      const response = await fetch(`/api/capsules/${capsuleId}/upload`, {
         method: 'POST',
         body: formData,
       })

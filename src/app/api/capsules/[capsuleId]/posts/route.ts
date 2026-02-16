@@ -1,21 +1,23 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-interface Params {
-  capsuleId: string
+interface RequestParams {
+  params: Promise<{ capsuleId: string }>
 }
 
-export async function GET(request: Request, { params }: { params: Params }) {
-  const { capsuleId } = params
+export async function GET(request: NextRequest, { params }: RequestParams) {
+  const { capsuleId } = await params
+
+  console.log(capsuleId)
 
   try {
     const posts = await prisma.message.findMany({
       where: { capsuleId },
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'asc',
       },
     })
     return NextResponse.json(posts)

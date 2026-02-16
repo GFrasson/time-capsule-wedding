@@ -2,14 +2,13 @@ import { QRCodeGenerator } from '@/components/qr-code-generator'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
-import { use } from 'react'
 
 interface SharePageProps {
   params: Promise<{ capsuleId: string }>
 }
 
-export default function SharePage({ params }: SharePageProps) {
-  const { capsuleId } = use(params)
+export default async function SharePage({ params }: SharePageProps) {
+  const { capsuleId } = await params
 
   return (
     <main className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">

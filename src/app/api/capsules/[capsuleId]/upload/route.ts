@@ -12,8 +12,11 @@ interface Params {
   capsuleId: string
 }
 
-export async function POST(request: Request, { params }: { params: Params }) {
-  const { capsuleId } = params
+export async function POST(
+  request: Request,
+  { params }: { params: Promise<Params> }
+) {
+  const { capsuleId } = await params
 
   try {
     const formData = await request.formData()
