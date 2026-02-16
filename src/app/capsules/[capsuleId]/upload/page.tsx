@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { UploadForm } from '@/components/upload-form'
 
 interface UploadPageProps {
@@ -17,6 +18,15 @@ export default async function UploadPage({ params }: UploadPageProps) {
           Compartilhe um momento especial com os noivos. Sua mensagem será guardada com carinho.
         </p>
         <UploadForm capsuleId={capsuleId} />
+
+        <div className="mt-6 pb-6 text-center">
+          <Link
+            href={`/capsules/${capsuleId}`}
+            className="text-sm text-zinc-500 hover:text-zinc-900 transition-colors underline underline-offset-4"
+          >
+            Ver mensagens
+          </Link>
+        </div>
       </div>
     </main>
   )
