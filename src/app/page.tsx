@@ -8,9 +8,9 @@ import prisma from '@/lib/prisma'
 interface Capsule {
   id: string;
   title: string;
-  description?: string;
-  status?: string;
-  coverUrl?: string;
+  description: string | null;
+  status: string | null;
+  coverUrl: string | null;
   unlockDate: Date;
 }
 
@@ -25,7 +25,7 @@ async function getCapsules(): Promise<Post[]> {
     id: capsule.id,
     title: capsule.title,
     description: capsule.description ?? '',
-    status: capsule.status as PostStatus,
+    status: capsule.status as PostStatus ?? undefined,
     mediaUrl: capsule.coverUrl ?? '',
     displayDate: capsule.unlockDate.toLocaleDateString('pt-BR',
       {
