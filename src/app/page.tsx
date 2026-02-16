@@ -21,6 +21,8 @@ async function getCapsules(): Promise<Post[]> {
     },
   })
 
+  console.log(capsules)
+
   return capsules.map((capsule: Capsule) => ({
     id: capsule.id,
     title: capsule.title,
@@ -41,6 +43,8 @@ async function getCapsules(): Promise<Post[]> {
 
 export default async function Home() {
   const capsules = await getCapsules()
+
+  console.log(capsules)
 
   return (
     <main className="min-h-screen bg-zinc-50 relative pb-20 font-sans">
