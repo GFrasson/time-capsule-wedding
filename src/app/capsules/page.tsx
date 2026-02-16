@@ -1,7 +1,8 @@
-import { Timeline, TimelineItem } from '@/components/ui/timeline'
-import { CapsuleCard } from '@/components/capsule-card'
+import { TimelineRoot, TimelineItem } from '@/components/ui/timeline'
 import { CapsuleHeader } from '@/app/capsules/components/capsule-header'
 import Link from 'next/link'
+import { LockedCapsuleCard } from '@/components/locked-capsule-card'
+import { UnlockedCapsuleCard } from '@/components/unlocked-capsule-card'
 
 // Mock Data
 type Capsule = {
@@ -60,33 +61,28 @@ export default async function CapsulesPage() {
           momentsCount={89}
           backgroundImageUrl="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2940&auto=format&fit=crop"
         />
-        <Timeline>
+
+        <TimelineRoot>
           {CAPSULES.map((capsule, index) => (
             <TimelineItem key={capsule.id} side={index % 2 === 0 ? 'right' : 'left'} date={capsule.displayDate}>
               {capsule.status === 'UNLOCKED' ? (
                 <Link href={`/capsules/${capsule.id}`} className="block w-full transition-transform active:scale-95">
-                  <CapsuleCard
+                  <UnlockedCapsuleCard
                     title={capsule.title}
                     description={capsule.description}
                     imageUrl={capsule.imageUrl}
-                    unlockDate={capsule.unlockDate}
-                    status={capsule.status}
-                    videoCount={capsule.videoCount}
                   />
                 </Link>
               ) : (
-                <CapsuleCard
+                <LockedCapsuleCard
                   title={capsule.title}
                   description={capsule.description}
                   imageUrl={capsule.imageUrl}
-                  unlockDate={capsule.unlockDate}
-                  status={capsule.status}
-                  videoCount={capsule.videoCount}
                 />
               )}
             </TimelineItem>
           ))}
-        </Timeline>
+        </TimelineRoot>
       </main>
     </div>
   )
