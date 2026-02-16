@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2, MessageSquare, Image as ImageIcon, Video as VideoIcon } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 type Message = {
   id: string
