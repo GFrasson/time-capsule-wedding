@@ -13,6 +13,7 @@ export type Post = {
   status?: PostStatus
   type: string
   author?: string
+  unlockDate?: Date
 }
 
 export type MemoryCardProps = {
@@ -34,6 +35,7 @@ export function MemoryCard({ post }: MemoryCardProps) {
     return <LockedCard
       title={post.title}
       description={post.description}
+      unlockDate={post.unlockDate}
     />
   }
 

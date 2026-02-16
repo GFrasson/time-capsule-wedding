@@ -26,6 +26,7 @@ async function getCapsules(): Promise<Post[]> {
         timeZone: 'UTC'
       }),
     type: 'image',
+    unlockDate: capsule.unlockDate,
   }))
 }
 

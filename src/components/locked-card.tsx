@@ -5,11 +5,25 @@ import { Lock } from "lucide-react"
 interface LockedCardProps {
   title?: string
   description?: string
+  unlockDate?: Date
 }
 
-export function LockedCard({ title = 'Sem título', description = '' }: LockedCardProps) {
-  const days = 245
-  const hours = 12
+export function LockedCard({ title = 'Sem título', description = '', unlockDate }: LockedCardProps) {
+  const calculateTimeLeft = () => {
+    if (!unlockDate) return { days: 0, hours: 0 }
+
+    const now = new Date()
+    const diff = unlockDate.getTime() - now.getTime()
+
+    if (diff <= 0) return { days: 0, hours: 0 }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+
+    return { days, hours }
+  }
+
+  const { days, hours } = calculateTimeLeft()
 
   return (
     <Card
@@ -34,11 +48,11 @@ export function LockedCard({ title = 'Sem título', description = '' }: LockedCa
             <div className="flex gap-3 text-center">
               <div className="bg-white dark:bg-neutral-rose-dark px-3 py-2 rounded shadow-sm min-w-14">
                 <div className="text-primary font-bold text-lg">{days}</div>
-                <div className="text-xs uppercase text-zinc-400 font-medium">Days</div>
+                <div className="text-xs uppercase text-zinc-400 font-medium">Dias</div>
               </div>
               <div className="bg-white dark:bg-neutral-rose-dark px-3 py-2 rounded shadow-sm min-w-14">
                 <div className="text-primary font-bold text-lg">{hours}</div>
-                <div className="text-xs uppercase text-zinc-400 font-medium">Hrs</div>
+                <div className="text-xs uppercase text-zinc-400 font-medium">Horas</div>
               </div>
             </div>
           </div>
