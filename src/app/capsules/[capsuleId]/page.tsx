@@ -12,12 +12,12 @@ interface CapsuleDetailPageProps {
 
 interface Message {
   id: string;
-  title?: string;
-  content?: string;
-  mediaUrl?: string;
+  title: string | null;
+  content: string | null;
+  mediaUrl: string | null;
   createdAt: Date;
   type: string;
-  sender?: string;
+  sender: string | null;
 }
 
 export default async function CapsuleDetailPage({ params }: CapsuleDetailPageProps) {
@@ -34,12 +34,12 @@ export default async function CapsuleDetailPage({ params }: CapsuleDetailPagePro
 
   const posts: Post[] = messages.map((message: Message) => ({
     id: message.id,
-    title: message.title ?? "",
-    description: message.content ?? "",
-    mediaUrl: message.mediaUrl ?? "",
+    title: message.title ?? undefined,
+    description: message.content ?? undefined,
+    mediaUrl: message.mediaUrl ?? undefined,
     displayDate: message.createdAt.toISOString(),
     type: message.type,
-    author: message.sender ?? "",
+    author: message.sender ?? undefined,
   }))
 
   if (!capsule) {
