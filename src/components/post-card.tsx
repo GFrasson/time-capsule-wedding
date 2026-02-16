@@ -32,13 +32,17 @@ export function PostCard({ title, description, mediaUrl, type, author }: PostCar
         />
       )}
 
-      <CardHeader className="p-4 text-left">
-        <div className="flex justify-between items-center">
-          {title && <CardTitle className="text-xl font-medium text-zinc-900 dark:text-white mb-1">{title}</CardTitle>}
-          {author && <p className="text-xs text-zinc-400 mt-2 font-medium">{author}</p>}
-        </div>
-        {description && <CardDescription className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{description}</CardDescription>}
-      </CardHeader>
+      {
+        title || description || author ? (
+          <CardHeader className="p-4 text-left">
+            <div className="flex justify-between items-center">
+              {title && <CardTitle className="text-xl font-medium text-zinc-900 dark:text-white mb-1">{title}</CardTitle>}
+              {author && <p className="text-xs text-zinc-400 mt-2 font-medium">{author}</p>}
+            </div>
+            {description && <CardDescription className="text-zinc-500 dark:text-zinc-400 text-sm leading-relaxed">{description}</CardDescription>}
+          </CardHeader>
+        ) : null
+      }
     </Card>
   )
 }
