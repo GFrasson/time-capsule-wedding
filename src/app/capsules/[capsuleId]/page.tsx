@@ -3,77 +3,42 @@ import { TimelineItem, TimelineRoot } from "@/components/timeline"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Share2 } from "lucide-react"
 import Link from "next/link"
-
-interface Message {
-  id: string
-  sender: string
-  content: string | null
-  mediaUrl: string | null
-  type: 'TEXT' | 'IMAGE' | 'VIDEO'
-  createdAt: string
-}
-
-interface Capsule {
-  id: string
-  title: string
-  description: string | null
-}
+import prisma from "@/lib/prisma"
 
 interface CapsuleDetailPageProps {
   params: Promise<{ capsuleId: string }>
 }
 
 export default async function CapsuleDetailPage({ params }: CapsuleDetailPageProps) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || ''
   const { capsuleId } = await params
 
-  const fetchCapsule = async (): Promise<Capsule | null> => {
-    try {
-      const res = await fetch(`${baseUrl}/api/capsules/${capsuleId}`)
-      if (res.ok) {
-        const data = await res.json()
-        return data
-      }
-    } catch (error) {
-      console.error("Failed to fetch capsule:", error)
-    }
-    return null
-  }
+  const capsule = await prisma.capsule.findUnique({
+    where: { id: capsuleId }
+  })
 
-  const fetchPosts = async (): Promise<Post[] | null> => {
-    try {
-      const res = await fetch(`${baseUrl}/api/capsules/${capsuleId}/posts`)
-      if (res.ok) {
-        const data: Message[] = await res.json()
-        const posts: Post[] = data.map((message) => ({
-          id: message.id,
-          title: message.sender,
-          description: message.content ?? '',
-          mediaUrl: message.mediaUrl ?? '',
-          displayDate: message.createdAt,
-          type: message.type,
-        }))
+  const messages = await prisma.message.findMany({
+    where: { capsuleId },
+    orderBy: { createdAt: 'asc' }
+  })
 
-        return posts
-      }
-    } catch (error) {
-      console.error(error)
-    }
-    return null
-  }
+  const posts: Post[] = messages.map((message) => ({
+    id: message.id,
+    title: message.sender ?? 'Anônimo',
+    description: message.content ?? '',
+    mediaUrl: message.mediaUrl ?? '',
+    displayDate: message.createdAt.toISOString(),
+    type: message.type,
+  }))
 
-  const capsule = await fetchCapsule()
-  const posts = await fetchPosts()
-
-  if (!capsule || !posts) {
-    return <div className="flex justify-center p-8">Nenhuma mensagem encontrada. Seja o primeiro!</div>
+  if (!capsule) {
+    return <div className="flex justify-center p-8">Cápsula não encontrada</div>
   }
 
   return (
     <div className="bg-zinc-50 min-h-screen">
       <main className="container mx-auto px-4 pb-12 md:px-8 max-w-3xl">
         <h1 className="mt-8 text-2xl text-center font-bold text-zinc-900 dark:text-white">
-          {capsule?.title ?? 'Cápsula'}
+          {capsule.title}
         </h1>
 
         <div className="flex justify-center my-6">
