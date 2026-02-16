@@ -2,7 +2,7 @@ import * as React from 'react'
 import { twMerge } from 'tailwind-merge'
 import Image from 'next/image'
 
-export interface CapsuleHeaderProps extends React.ComponentProps<'header'> {
+export interface HomeHeaderProps extends React.ComponentProps<'header'> {
   coupleNames: string
   weddingDate: string
   daysCount: number
@@ -11,7 +11,7 @@ export interface CapsuleHeaderProps extends React.ComponentProps<'header'> {
   backgroundImageUrl: string
 }
 
-export function CapsuleHeader({
+export function HomeHeader({
   className,
   coupleNames,
   weddingDate,
@@ -20,7 +20,7 @@ export function CapsuleHeader({
   momentsCount,
   backgroundImageUrl,
   ...props
-}: CapsuleHeaderProps) {
+}: HomeHeaderProps) {
   return (
     <header
       className={twMerge('relative h-[450px] overflow-hidden rounded-b-xl group text-white', className)}

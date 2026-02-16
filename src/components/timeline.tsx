@@ -1,91 +1,71 @@
-'use client'
+import * as React from 'react'
+import { tv, type VariantProps } from 'tailwind-variants'
+import { twMerge } from 'tailwind-merge'
 
-import { useEffect, useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+const timelineVariants = tv({
+  slots: {
+    root: 'relative flex flex-col items-center w-full py-8',
+    line: 'absolute left-1/2 top-0 bottom-0 w-px -translate-x-1/2 bg-gradient-to-b from-transparent via-primary/20 to-transparent h-full z-0',
+    item: 'group relative flex w-full items-start justify-center',
+    content: 'w-full flex flex-col'
+  },
+  variants: {
+    side: {
+      left: {
+        item: 'flex-row-reverse',
+        content: 'items-end text-right',
+      },
+      right: {
+        item: 'flex-row',
+        content: 'items-start text-left',
+      },
+    }
+  },
+  defaultVariants: {
+    side: 'left',
+  }
+})
 
-type Message = {
-  id: string
-  sender: string
-  content: string | null
-  mediaUrl: string | null
-  type: 'TEXT' | 'IMAGE' | 'VIDEO'
-  createdAt: string
+export interface TimelineProps extends React.ComponentProps<'div'> { }
+
+export function TimelineRoot({ className, children, ...props }: TimelineProps) {
+  const { root, line } = timelineVariants()
+  return (
+    <div data-slot="timeline" className={twMerge(root(), className)} {...props}>
+      <div className={line()} aria-hidden="true" />
+      {children}
+    </div>
+  )
 }
 
-export function Timeline() {
-  const [posts, setPosts] = useState<Message[]>([])
-  const [loading, setLoading] = useState(true)
+export interface TimelineDateProps extends React.ComponentProps<'div'> { }
 
-  useEffect(() => {
-    fetchPosts()
-    const interval = setInterval(fetchPosts, 30000) // Poll every 30s
-    return () => clearInterval(interval)
-  }, [])
+export function TimelineDate({ className, ...props }: TimelineDateProps) {
+  return (
+    <div
+      data-slot="timeline-date"
+      className={twMerge("flex items-center justify-center rounded-full border border-primary/10 bg-white dark:bg-neutral-rose-dark px-4 py-1 text-xs font-semibold text-primary shadow-sm z-20 my-4", className)}
+      {...props}
+    />
+  )
+}
 
-  const fetchPosts = async () => {
-    try {
-      const res = await fetch('/api/posts')
-      if (res.ok) {
-        const data = await res.json()
-        setPosts(data)
-      }
-    } catch (error) {
-      console.error(error)
-    } finally {
-      setLoading(false)
-    }
-  }
+export interface TimelineItemProps extends React.ComponentProps<'div'>, VariantProps<typeof timelineVariants> {
+  date?: React.ReactNode
+}
 
-  if (loading) {
-    return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="animate-spin text-zinc-400" />
-      </div>
-    )
-  }
-
-  if (posts.length === 0) {
-    return (
-      <div className="text-center py-12 text-zinc-400">
-        <p>Nenhuma mensagem ainda. Seja o primeiro!</p>
-      </div>
-    )
-  }
+export function TimelineItem({ className, side, children, date, ...props }: TimelineItemProps) {
+  const { item, content } = timelineVariants({ side })
 
   return (
-    <div className="space-y-6 max-w-2xl mx-auto pb-20">
-      {posts.map((post) => (
-        <Card key={post.id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-300 border-zinc-100">
-          <CardHeader className="flex flex-row items-center gap-3 pb-2 bg-zinc-50/50">
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold
-              ${post.type === 'IMAGE' ? 'bg-rose-400' : post.type === 'VIDEO' ? 'bg-blue-400' : 'bg-emerald-400'}
-            `}>
-              {post.sender.charAt(0).toUpperCase()}
-            </div>
-            <div>
-              <CardTitle className="text-base font-medium text-zinc-800">{post.sender}</CardTitle>
-              <p className="text-xs text-zinc-400">{new Date(post.createdAt).toLocaleDateString()} às {new Date(post.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {post.mediaUrl && (
-              <div className="w-full bg-black/5">
-                {post.type.includes('VIDEO') ? (
-                  <video controls className="w-full max-h-[500px] object-contain" src={post.mediaUrl} />
-                ) : (
-                  <img src={post.mediaUrl} alt="Content" className="w-full h-auto max-h-[600px] object-contain" loading="lazy" />
-                )}
-              </div>
-            )}
-            {post.content && (
-              <div className="p-4">
-                <p className="text-zinc-700 whitespace-pre-wrap text-lg leading-relaxed">{post.content}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
+    <div className="flex flex-col w-full items-center">
+      {date && <TimelineDate>{date}</TimelineDate>}
+
+      <div data-slot="timeline-item" className={twMerge(item(), className)} {...props}>
+        <div className={content()}>
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

@@ -1,9 +1,11 @@
 "use client"
 
 import { MemoryCard, Post } from "@/components/memory-card"
-import { TimelineItem, TimelineRoot } from "@/components/ui/timeline"
-import { Loader2 } from "lucide-react"
+import { TimelineItem, TimelineRoot } from "@/components/timeline"
+import { Button } from "@/components/ui/button"
+import { Loader2, PlusCircle } from "lucide-react"
 import { useState, useEffect } from "react"
+import Link from "next/link"
 
 interface Message {
   id: string
@@ -83,6 +85,15 @@ export default function CapsuleDetailPage({ params }: CapsuleDetailPageProps) {
           ))}
         </TimelineRoot>
       </main>
+
+      <div className="fixed bottom-6 right-6 z-20">
+        <Link href="/upload">
+          <Button size="lg" className="rounded-full w-12 h-12 shadow-lg bg-primary hover:bg-primary/90 transition-transform hover:scale-105 flex items-center justify-center p-0">
+            <PlusCircle className="w-12 h-12 text-white" />
+            <span className="sr-only">Adicionar</span>
+          </Button>
+        </Link>
+      </div>
     </div>
   )
 }

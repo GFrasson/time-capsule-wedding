@@ -28,7 +28,7 @@ export function QRCodeGenerator() {
             value={url}
             size={200}
             level="H"
-            includeMargin={true}
+            includeMargin
           />
         </div>
         <p className="text-xs text-zinc-400 break-all text-center">{url}</p>

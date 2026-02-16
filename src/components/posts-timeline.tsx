@@ -1,4 +1,4 @@
-import { TimelineRoot, TimelineItem } from '@/components/ui/timeline'
+import { TimelineRoot, TimelineItem } from '@/components/timeline'
 import { MemoryCard, Post } from './memory-card'
 
 interface PostsTimelineProps {

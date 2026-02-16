@@ -1,37 +1,56 @@
-import Link from 'next/link'
-import { Timeline } from '@/components/timeline'
-import { Button } from '@/components/ui/button'
-import { PlusCircle, QrCode } from 'lucide-react'
+import { Post } from '@/components/memory-card'
+
+import { HomeHeader } from '../components/home-header'
+import { PostsTimeline } from '@/components/posts-timeline'
+
+// Mock Data
+const CAPSULES: Post[] = [
+  {
+    id: "1",
+    status: 'UNLOCKED',
+    title: 'The Proposal',
+    description: 'The moment everything changed. Under the old oak tree where we had our first picnic. I was shaking so much I almost dropped the ring!',
+    mediaUrl: 'https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2940&auto=format&fit=crop', // Wedding/Engagement photo
+    displayDate: 'Oct 12, 2023',
+    type: "image"
+  },
+  {
+    id: "2",
+    status: 'UNLOCKED',
+    title: 'Just Married',
+    description: 'Best day of our lives. The vows, the tears, the dancing. Here are the first 50 photos from the photographer.',
+    mediaUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=2940&auto=format&fit=crop', // Wedding party
+    displayDate: 'Jun 15, 2024',
+    type: "image"
+  },
+  {
+    id: "3",
+    status: 'LOCKED',
+    title: '1st Anniversary Capsule',
+    description: 'Contains video messages from guests',
+    mediaUrl: 'https://images.unsplash.com/photo-1511285560982-1351c4f63525?q=80&w=2940&auto=format&fit=crop', // Anniversary/Couple
+    displayDate: 'Jun 15, 2025',
+    type: "image"
+  },
+]
+
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-zinc-50 relative pb-20 font-sans">
-      <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-md border-b border-zinc-200 px-6 py-4 flex items-center justify-between shadow-sm">
-        <h1 className="text-xl font-bold text-zinc-800">Cápsula do Tempo</h1>
-        <Link href="/share">
-          <Button variant="ghost" size="icon" className="hover:bg-zinc-100 rounded-full">
-            <QrCode className="w-5 h-5 text-zinc-600" />
-            <span className="sr-only">QR Code</span>
-          </Button>
-        </Link>
-      </header>
+      <div className="bg-zinc-50 min-h-screen">
+        <main className="container mx-auto px-4 pb-12 md:px-8 max-w-3xl">
+          <HomeHeader
+            coupleNames="Débora & Joel"
+            weddingDate="September 12, 2023"
+            daysCount={345}
+            capsulesCount={12}
+            momentsCount={89}
+            backgroundImageUrl="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2940&auto=format&fit=crop"
+          />
 
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl text-zinc-900 mb-2">Linha do Tempo</h2>
-          <p className="text-zinc-500">Momentos compartilhados pelos convidados</p>
-        </div>
-
-        <Timeline />
-      </div>
-
-      <div className="fixed bottom-6 right-6 z-20">
-        <Link href="/upload">
-          <Button size="lg" className="rounded-full w-12 h-12 shadow-lg bg-primary hover:bg-primary/90 transition-transform hover:scale-105 flex items-center justify-center p-0">
-            <PlusCircle className="w-12 h-12 text-white" />
-            <span className="sr-only">Adicionar</span>
-          </Button>
-        </Link>
+          <PostsTimeline posts={CAPSULES} />
+        </main>
       </div>
     </main>
   )
