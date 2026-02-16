@@ -26,7 +26,6 @@ model Capsule {
   id          String   @id @default(cuid())
   title       String
   description String?
-  status      String   @default("LOCKED") // LOCKED, UNLOCKED
   unlockDate  DateTime
   coverUrl    String?
   createdAt   DateTime @default(now())

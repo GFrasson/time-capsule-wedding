@@ -1,4 +1,4 @@
-import { Post, PostStatus } from '@/components/memory-card'
+import { Post } from '@/components/memory-card'
 
 import { HomeHeader } from '../components/home-header'
 import { PostsTimeline } from '@/components/posts-timeline'
@@ -11,7 +11,6 @@ interface Capsule {
   id: string;
   title: string;
   description: string | null;
-  status: string | null;
   coverUrl: string | null;
   unlockDate: Date;
 }
@@ -27,7 +26,7 @@ async function getCapsules(): Promise<Post[]> {
     id: capsule.id,
     title: capsule.title,
     description: capsule.description ?? '',
-    status: capsule.status as PostStatus ?? undefined,
+    status: new Date() < capsule.unlockDate ? 'LOCKED' : 'UNLOCKED',
     mediaUrl: capsule.coverUrl ?? '',
     displayDate: capsule.unlockDate.toLocaleDateString('pt-BR',
       {
