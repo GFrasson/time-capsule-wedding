@@ -23,7 +23,7 @@ const uploadSchema = z.object({
   sender: z.string().optional(),
   content: z.string().optional(),
   file: z.custom<File>((val) => val instanceof File, "Por favor, selecione um arquivo")
-    .refine((file) => file.size <= MAX_FILE_SIZE, `O arquivo deve ter no máximo 50MB.`)
+    .refine((file) => file.size <= MAX_FILE_SIZE, `O arquivo deve ter no máximo 30MB.`)
     .refine(
       (file) => ACCEPTED_IMAGE_TYPES.includes(file.type) || ACCEPTED_VIDEO_TYPES.includes(file.type),
       "Apenas imagens e vídeos são permitidos."
