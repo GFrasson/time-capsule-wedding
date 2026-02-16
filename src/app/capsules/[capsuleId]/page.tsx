@@ -2,7 +2,7 @@ import { MemoryCard, Post } from "@/components/memory-card"
 import { FormattedDate } from "@/components/formatted-date"
 import { TimelineItem, TimelineRoot } from "@/components/timeline"
 import { Button } from "@/components/ui/button"
-import { PlusCircle, Share2 } from "lucide-react"
+import { PlusCircle, QrCode } from "lucide-react"
 import Link from "next/link"
 import prisma from "@/lib/prisma"
 
@@ -50,16 +50,16 @@ export default async function CapsuleDetailPage({ params }: CapsuleDetailPagePro
 
   return (
     <div className="bg-zinc-50 min-h-screen">
-      <main className="container mx-auto px-4 pb-12 md:px-8 max-w-3xl">
-        <h1 className="mt-8 text-2xl text-center font-bold text-zinc-900 dark:text-white">
+      <main className="bg-zinc-50 pt-8 container mx-auto px-4 pb-12 md:px-8 max-w-3xl">
+        <h1 className="text-2xl text-center font-bold text-zinc-900 dark:text-white">
           {capsule.title}
         </h1>
 
-        <div className="flex justify-center my-6">
+        <div className="flex justify-center items-center my-6">
           <Link href={`${capsuleId}/share`}>
-            <Button variant="outline" className="gap-2">
-              <Share2 className="w-4 h-4" />
-              Compartilhar QR Code
+            <Button variant="outline" className="gap-2 text-sm">
+              <QrCode className="w-4 h-4" />
+              QR Code
             </Button>
           </Link>
         </div>
