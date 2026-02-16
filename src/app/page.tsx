@@ -5,6 +5,8 @@ import { PostsTimeline } from '@/components/posts-timeline'
 
 import prisma from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+
 interface Capsule {
   id: string;
   title: string;
@@ -20,8 +22,6 @@ async function getCapsules(): Promise<Post[]> {
       unlockDate: 'asc',
     },
   })
-
-  console.log(capsules)
 
   return capsules.map((capsule: Capsule) => ({
     id: capsule.id,
@@ -43,8 +43,6 @@ async function getCapsules(): Promise<Post[]> {
 
 export default async function Home() {
   const capsules = await getCapsules()
-
-  console.log(capsules)
 
   return (
     <main className="min-h-screen bg-zinc-50 relative pb-20 font-sans">

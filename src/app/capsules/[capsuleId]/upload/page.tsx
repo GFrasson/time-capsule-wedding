@@ -1,12 +1,11 @@
 import { UploadForm } from '@/components/upload-form'
-import { use } from 'react'
 
 interface UploadPageProps {
   params: Promise<{ capsuleId: string }>
 }
 
-export default function UploadPage({ params }: UploadPageProps) {
-  const { capsuleId } = use(params)
+export default async function UploadPage({ params }: UploadPageProps) {
+  const { capsuleId } = await params
 
   return (
     <main className="min-h-screen bg-zinc-50 flex items-center justify-center p-4">

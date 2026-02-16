@@ -6,6 +6,8 @@ import { PlusCircle, Share2 } from "lucide-react"
 import Link from "next/link"
 import prisma from "@/lib/prisma"
 
+export const dynamic = 'force-dynamic'
+
 interface CapsuleDetailPageProps {
   params: Promise<{ capsuleId: string }>
 }
