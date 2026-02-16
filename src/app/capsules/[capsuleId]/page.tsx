@@ -10,6 +10,16 @@ interface CapsuleDetailPageProps {
   params: Promise<{ capsuleId: string }>
 }
 
+interface Message {
+  id: string;
+  title?: string;
+  content?: string;
+  mediaUrl?: string;
+  createdAt: Date;
+  type: string;
+  sender?: string;
+}
+
 export default async function CapsuleDetailPage({ params }: CapsuleDetailPageProps) {
   const { capsuleId } = await params
 
@@ -22,7 +32,7 @@ export default async function CapsuleDetailPage({ params }: CapsuleDetailPagePro
     orderBy: { createdAt: 'asc' }
   })
 
-  const posts: Post[] = messages.map((message) => ({
+  const posts: Post[] = messages.map((message: Message) => ({
     id: message.id,
     title: message.title ?? undefined,
     description: message.content ?? undefined,
