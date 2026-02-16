@@ -7,5 +7,5 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatDateTime(date: string | number | Date) {
   const d = new Date(date)
-  return `${d.toLocaleDateString()} às ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
+  return `${d.toLocaleDateString('pt-BR')} às ${d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
 }
