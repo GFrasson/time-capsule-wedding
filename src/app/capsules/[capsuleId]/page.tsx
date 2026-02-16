@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button"
 import { PlusCircle, QrCode } from "lucide-react"
 import Link from "next/link"
 import prisma from "@/lib/prisma"
+import { PaginationControl } from '@/components/pagination-control'
 
 export const dynamic = 'force-dynamic'
 
 interface CapsuleDetailPageProps {
   params: Promise<{ capsuleId: string }>
+  searchParams: Promise<{ page?: string }>
 }
 
 interface Message {
@@ -22,17 +24,34 @@ interface Message {
   sender: string | null;
 }
 
-export default async function CapsuleDetailPage({ params }: CapsuleDetailPageProps) {
+export default async function CapsuleDetailPage({ params, searchParams }: CapsuleDetailPageProps) {
   const { capsuleId } = await params
+  const { page } = await searchParams
+  const currentPage = Number(page) || 1
+  const limit = 10
+  const skip = (currentPage - 1) * limit
 
   const capsule = await prisma.capsule.findUnique({
     where: { id: capsuleId }
   })
 
-  const messages = await prisma.message.findMany({
-    where: { capsuleId },
-    orderBy: { createdAt: 'asc' }
-  })
+  if (!capsule) {
+    return <div className="flex justify-center p-8">Cápsula não encontrada</div>
+  }
+
+  const [messages, totalMessages] = await Promise.all([
+    prisma.message.findMany({
+      where: { capsuleId },
+      orderBy: { createdAt: 'asc' },
+      skip,
+      take: limit,
+    }),
+    prisma.message.count({
+      where: { capsuleId }
+    })
+  ])
+
+  const totalPages = Math.ceil(totalMessages / limit)
 
   const posts: Post[] = messages.map((message: Message) => ({
     id: message.id,
@@ -43,10 +62,6 @@ export default async function CapsuleDetailPage({ params }: CapsuleDetailPagePro
     type: message.type,
     author: message.sender ?? "",
   }))
-
-  if (!capsule) {
-    return <div className="flex justify-center p-8">Cápsula não encontrada</div>
-  }
 
   return (
     <div className="bg-zinc-50 min-h-screen">
@@ -69,17 +84,28 @@ export default async function CapsuleDetailPage({ params }: CapsuleDetailPagePro
             <p>Nenhuma mensagem ainda. Seja o primeiro!</p>
           </div>
         ) : (
-          <TimelineRoot>
-            {posts.map((post) => (
-              <TimelineItem
-                key={post.id}
-                side="left"
-                date={<FormattedDate date={post.displayDate} />}
-              >
-                <MemoryCard post={post} />
-              </TimelineItem>
-            ))}
-          </TimelineRoot>
+          <>
+            <TimelineRoot>
+              {posts.map((post) => (
+                <TimelineItem
+                  key={post.id}
+                  side="left"
+                  date={<FormattedDate date={post.displayDate} />}
+                >
+                  <MemoryCard post={post} />
+                </TimelineItem>
+              ))}
+            </TimelineRoot>
+
+            {totalPages > 1 && (
+              <PaginationControl
+                currentPage={currentPage}
+                totalPages={totalPages}
+                baseUrl={`/capsules/${capsuleId}`}
+                className="mt-8"
+              />
+            )}
+          </>
         )}
       </main>
 

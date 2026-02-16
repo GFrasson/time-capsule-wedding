@@ -1,9 +1,9 @@
-import { Post } from '@/components/memory-card'
-
-import { HomeHeader } from '../components/home-header'
-import { PostsTimeline } from '@/components/posts-timeline'
-
 import prisma from '@/lib/prisma'
+
+import { Post } from '@/components/memory-card'
+import { HomeHeader } from '@/components/home-header'
+import { PostsTimeline } from '@/components/posts-timeline'
+import { PaginationControl } from '@/components/pagination-control'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,14 +15,21 @@ interface Capsule {
   unlockDate: Date;
 }
 
-async function getCapsules(): Promise<Post[]> {
-  const capsules = await prisma.capsule.findMany({
-    orderBy: {
-      unlockDate: 'asc',
-    },
-  })
+async function getCapsules(page: number = 1, limit: number = 10): Promise<{ capsules: Post[], total: number }> {
+  const skip = (page - 1) * limit
 
-  return capsules.map((capsule: Capsule) => ({
+  const [capsules, total] = await Promise.all([
+    prisma.capsule.findMany({
+      orderBy: {
+        unlockDate: 'asc',
+      },
+      skip,
+      take: limit,
+    }),
+    prisma.capsule.count()
+  ])
+
+  const mappedCapsules: Post[] = capsules.map((capsule: Capsule) => ({
     id: capsule.id,
     title: capsule.title,
     description: capsule.description ?? '',
@@ -38,6 +45,8 @@ async function getCapsules(): Promise<Post[]> {
     type: 'image',
     unlockDate: capsule.unlockDate,
   }))
+
+  return { capsules: mappedCapsules, total }
 }
 
 
@@ -54,11 +63,21 @@ async function getHeaderData() {
   return { firstCapsule, momentsCount }
 }
 
-export default async function Home() {
-  const [capsules, { firstCapsule, momentsCount }] = await Promise.all([
-    getCapsules(),
+interface HomeProps {
+  searchParams: Promise<{ page?: string }>
+}
+
+export default async function Home({ searchParams }: HomeProps) {
+  const { page } = await searchParams
+  const currentPage = Number(page) || 1
+  const limit = 10
+
+  const [{ capsules, total }, { firstCapsule, momentsCount }] = await Promise.all([
+    getCapsules(currentPage, limit),
     getHeaderData(),
   ])
+
+  const totalPages = Math.ceil(total / limit)
 
   const startDate = firstCapsule?.unlockDate || new Date()
   const daysCount = Math.floor((new Date().getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
@@ -78,12 +97,21 @@ export default async function Home() {
             coupleNames="Débora & Joel"
             weddingDate={weddingDate}
             daysCount={daysCount}
-            capsulesCount={capsules.length}
+            capsulesCount={total}
             momentsCount={momentsCount}
             backgroundImageUrl="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?q=80&w=2940&auto=format&fit=crop"
           />
 
           <PostsTimeline posts={capsules} />
+
+          {totalPages > 1 && (
+            <PaginationControl
+              currentPage={currentPage}
+              totalPages={totalPages}
+              baseUrl="/"
+              className="mt-8"
+            />
+          )}
         </main>
       </div>
     </main>
