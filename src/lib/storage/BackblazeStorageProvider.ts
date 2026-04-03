@@ -25,8 +25,8 @@ export class BackblazeStorageProvider implements IStorageProvider {
   }
 
   async upload(buffer: Buffer, originalFilename: string, mimeType: string): Promise<UploadResult> {
-    const ext = originalFilename.split('.').pop();
-    const uniqueName = crypto.randomUUID() + (ext ? `.${ext}` : '');
+    const extension = originalFilename.split('.').pop();
+    const uniqueName = crypto.randomUUID() + (extension ? `.${extension}` : '');
     const key = `wedding_capsule/${uniqueName}`;
 
     const command = new PutObjectCommand({
