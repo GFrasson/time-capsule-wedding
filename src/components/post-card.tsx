@@ -1,6 +1,5 @@
 import { Card, CardHeader, CardTitle, CardDescription } from "./ui/card"
 import Image from "next/image"
-
 interface PostCardProps {
   title?: string
   description?: string
@@ -29,6 +28,7 @@ export function PostCard({ title, description, mediaUrl, type, author }: PostCar
           className="w-full h-auto object-cover overflow-hidden"
           width={1000}
           height={1000}
+          unoptimized
         />
       )}
 
