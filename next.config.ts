@@ -41,6 +41,11 @@ if (backblazePublicPattern) {
 
 const nextConfig: NextConfig = {
   images: {
+    localPatterns: [
+      {
+        pathname: '/api/media',
+      },
+    ],
     remotePatterns,
   },
 };
