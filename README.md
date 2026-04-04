@@ -44,6 +44,10 @@ Uma aplicação moderna e elegante para convidados compartilharem mensagens, fot
    BACKBLAZE_KEY_ID="seu_key_id"
    BACKBLAZE_APPLICATION_KEY="sua_application_key"
    BACKBLAZE_PUBLIC_ENDPOINT="https://f000.backblazeb2.com/file/seu_bucket_name"
+
+   # Proteção de acesso via QR Code (obrigatório para restringir acesso):
+   CAPSULE_ACCESS_TOKEN="um-token-secreto-forte"
+   NEXT_PUBLIC_CAPSULE_ACCESS_TOKEN="um-token-secreto-forte"
    ```
 
 3. **Configure o Banco de Dados**:
