@@ -39,6 +39,7 @@ export function UnlockedCard({ title = 'Sem título', description = '', mediaUrl
               className="w-full h-full object-cover overflow-hidden"
               width={500}
               height={500}
+              unoptimized
             />
           </div>
         </div>

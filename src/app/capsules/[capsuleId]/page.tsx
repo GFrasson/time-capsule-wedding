@@ -6,6 +6,7 @@ import { PlusCircle, QrCode } from "lucide-react"
 import Link from "next/link"
 import prisma from "@/lib/prisma"
 import { PaginationControl } from '@/components/pagination-control'
+import { storageProvider } from "@/lib/storage"
 
 export const dynamic = 'force-dynamic'
 
@@ -53,15 +54,17 @@ export default async function CapsuleDetailPage({ params, searchParams }: Capsul
 
   const totalPages = Math.ceil(totalMessages / limit)
 
-  const posts: Post[] = messages.map((message: Message) => ({
-    id: message.id,
-    title: message.title ?? "",
-    description: message.content ?? "",
-    mediaUrl: message.mediaUrl ?? "",
-    displayDate: message.createdAt.toISOString(),
-    type: message.type,
-    author: message.sender ?? "",
-  }))
+  const posts: Post[] = await Promise.all(
+    messages.map(async (message: Message) => ({
+      id: message.id,
+      title: message.title ?? "",
+      description: message.content ?? "",
+      mediaUrl: await storageProvider.getDownloadUrl(message.mediaUrl ?? ""),
+      displayDate: message.createdAt.toISOString(),
+      type: message.type,
+      author: message.sender ?? "",
+    }))
+  )
 
   return (
     <div className="bg-zinc-50 min-h-screen">

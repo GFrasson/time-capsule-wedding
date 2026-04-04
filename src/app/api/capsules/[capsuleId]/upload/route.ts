@@ -1,12 +1,6 @@
 import { NextResponse } from 'next/server'
-import { v2 as cloudinary } from 'cloudinary'
 import prisma from '@/lib/prisma'
-
-cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-})
+import { storageProvider } from '@/lib/storage'
 
 interface Params {
   capsuleId: string
@@ -35,23 +29,14 @@ export async function POST(
     if (file && file.size > 0) {
       const arrayBuffer = await file.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
+      
+      const mimeType = file.type || 'application/octet-stream';
+      const originalFilename = file.name || 'unnamed_file';
 
-      const uploadResult = await new Promise<any>((resolve, reject) => {
-        const stream = cloudinary.uploader.upload_stream(
-          {
-            folder: 'wedding_capsule',
-            resource_type: 'auto',
-          },
-          (error, result) => {
-            if (error) reject(error)
-            else resolve(result)
-          }
-        )
-        stream.end(buffer)
-      })
+      const uploadResult = await storageProvider.upload(buffer, originalFilename, mimeType);
 
-      mediaUrl = uploadResult.secure_url
-      mediaType = uploadResult.resource_type === 'video' ? 'VIDEO' : 'IMAGE'
+      mediaUrl = uploadResult.storagePath
+      mediaType = uploadResult.mediaType
     }
 
     const message = await prisma.message.create({

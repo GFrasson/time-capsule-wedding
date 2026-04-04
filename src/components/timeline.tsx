@@ -26,7 +26,7 @@ const timelineVariants = tv({
   }
 })
 
-export interface TimelineProps extends React.ComponentProps<'div'> { }
+export type TimelineProps = React.ComponentProps<'div'>
 
 export function TimelineRoot({ className, children, ...props }: TimelineProps) {
   const { root, line } = timelineVariants()
@@ -38,7 +38,7 @@ export function TimelineRoot({ className, children, ...props }: TimelineProps) {
   )
 }
 
-export interface TimelineDateProps extends React.ComponentProps<'div'> { }
+export type TimelineDateProps = React.ComponentProps<'div'>
 
 export function TimelineDate({ className, ...props }: TimelineDateProps) {
   return (
