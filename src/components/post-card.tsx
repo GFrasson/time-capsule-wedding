@@ -28,6 +28,7 @@ export function PostCard({ title, description, mediaUrl, type, author }: PostCar
           className="w-full h-auto object-cover overflow-hidden"
           width={1000}
           height={1000}
+          sizes="(max-width: 768px) 100vw, 768px"
           unoptimized
         />
       )}
