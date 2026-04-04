@@ -4,18 +4,18 @@ Uma aplicação moderna e elegante para convidados compartilharem mensagens, fot
 
 ## 🚀 Funcionalidades
 
-- **Upload de Mídia**: Suporte para mensagens de texto, fotos e vídeos via Cloudinary.
+- **Upload de Mídia**: Suporte para mensagens de texto, fotos e vídeos (via Cloudinary ou Backblaze B2).
 - **Linha do Tempo em Tempo Real**: Visualize as mensagens conforme elas são enviadas.
 - **QR Code Gerado Automaticamente**: Facilite o acesso dos convidados à página de upload.
 - **Design Mobile-First**: Interface limpa e responsiva, otimizada para celulares.
-- **Armazenamento Seguro**: Metadados no PostgreSQL e arquivos no Cloudinary.
+- **Armazenamento Seguro**: Metadados no PostgreSQL e arquivos na nuvem escolhida.
 
 ## 🛠️ Configuração
 
 ### Pré-requisitos
 - Node.js 18+
 - Banco de Dados PostgreSQL (Local ou Nuvem)
-- Conta no Cloudinary (para upload de arquivos)
+- Conta no Cloudinary ou Backblaze B2 (para upload de arquivos)
 
 ### Passos para Instalação
 
@@ -28,9 +28,22 @@ Uma aplicação moderna e elegante para convidados compartilharem mensagens, fot
    Renomeie o `.env` ou crie um novo com as seguintes chaves:
    ```env
    DATABASE_URL="postgresql://user:password@localhost:5432/wedding_capsule?schema=public"
+   
+   # Escolha o provedor de storage (cloudinary ou backblaze)
+   STORAGE_PROVIDER="backblaze"
+   
+   # Se usar Cloudinary:
    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME="seu_cloud_name"
    CLOUDINARY_API_KEY="sua_api_key"
    CLOUDINARY_API_SECRET="seu_api_secret"
+   
+   # Se usar Backblaze B2:
+   BACKBLAZE_BUCKET_NAME="seu_bucket_name"
+   BACKBLAZE_ENDPOINT="https://s3.us-west-xxx.backblazeb2.com"
+   BACKBLAZE_REGION="us-west-xxx"
+   BACKBLAZE_KEY_ID="seu_key_id"
+   BACKBLAZE_APPLICATION_KEY="sua_application_key"
+   BACKBLAZE_PUBLIC_ENDPOINT="https://f000.backblazeb2.com/file/seu_bucket_name"
    ```
 
 3. **Configure o Banco de Dados**:
