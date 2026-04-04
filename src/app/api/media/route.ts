@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
   const storagePath = request.nextUrl.searchParams.get('path');
 
   if (!storagePath) {
-    return NextResponse.json({ error: 'Missing media path' }, { status: 400 });
+    return NextResponse.json(
+      { error: 'Caminho da mídia não informado.' },
+      { status: 400 }
+    );
   }
 
   const downloadUrl = await storageProvider.getDownloadUrl(storagePath);
