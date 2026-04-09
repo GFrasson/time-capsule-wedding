@@ -2,16 +2,9 @@ import { NextResponse } from 'next/server'
 import { storageProvider } from '@/lib/storage'
 import { getMediaValidationError } from '@/lib/upload-validation'
 
-interface Params {
-  capsuleId: string
-}
-
 export async function POST(
   request: Request,
-  { params }: { params: Promise<Params> }
 ) {
-  await params
-
   try {
     const body = await request.json()
     const originalFilename = body.originalFilename as string | undefined
