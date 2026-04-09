@@ -13,25 +13,29 @@ import { Textarea } from '@/components/ui/textarea'
 import { Upload, Loader2, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import Image from 'next/image'
-
-const MAX_FILE_SIZE = 30 * 1024 * 1024; // 30MB
-const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-const ACCEPTED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/ogg"];
+import { getMediaValidationError, MAX_FILE_SIZE } from '@/lib/upload-validation'
 
 const uploadSchema = z.object({
   title: z.string().optional(),
   sender: z.string().optional(),
   content: z.string().optional(),
   file: z.custom<File>((val) => val instanceof File, "Por favor, selecione um arquivo")
-    .refine((file) => file.size <= MAX_FILE_SIZE, `O arquivo deve ter no máximo 30MB.`)
+    .refine((file) => file.size <= MAX_FILE_SIZE, "O arquivo deve ter no máximo 50MB.")
     .refine(
-      (file) => ACCEPTED_IMAGE_TYPES.includes(file.type) || ACCEPTED_VIDEO_TYPES.includes(file.type),
+      (file) => !getMediaValidationError(file.type, file.size),
       "Apenas imagens e vídeos são permitidos."
     )
 })
 
 interface UploadFormProps {
   capsuleId?: string
+}
+
+interface DirectUploadInitResponse {
+  directUpload: true
+  uploadUrl: string
+  storagePath: string
+  mediaType: 'IMAGE' | 'VIDEO'
 }
 
 export function UploadForm({ capsuleId }: UploadFormProps) {
@@ -50,33 +54,72 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
   // Handle file selection separately to manage preview
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      form.setValue('file', selectedFile)
-      form.clearErrors('file')
 
-      // Create preview for images
-      if (selectedFile.type.startsWith('image/')) {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          setPreview(reader.result as string)
-        }
-        reader.readAsDataURL(selectedFile)
-      } else {
-        setPreview(null)
+    if (!selectedFile) {
+      return
+    }
+
+    form.setValue('file', selectedFile)
+    form.clearErrors('file')
+
+    // Create preview for images
+    if (selectedFile.type.startsWith('image/')) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPreview(reader.result as string)
       }
+      reader.readAsDataURL(selectedFile)
+    } else {
+      setPreview(null)
     }
   }
 
   const onSubmit = async (values: z.infer<typeof uploadSchema>) => {
     setIsUploading(true)
 
-    const formData = new FormData()
-    formData.append('file', values.file)
-    if (values.title) formData.append('title', values.title)
-    if (values.sender) formData.append('sender', values.sender)
-    if (values.content) formData.append('content', values.content)
-
     try {
+      const initResponse = await fetch(`/api/capsules/${capsuleId}/upload/init`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          originalFilename: values.file.name,
+          mimeType: values.file.type ?? 'application/octet-stream',
+          fileSize: values.file.size,
+        }),
+      })
+
+      if (!initResponse.ok) {
+        throw new Error('Upload initialization failed')
+      }
+
+      const initResult = await initResponse.json()
+
+      const formData = new FormData()
+      if (values.title) formData.append('title', values.title)
+      if (values.sender) formData.append('sender', values.sender)
+      if (values.content) formData.append('content', values.content)
+
+      if (initResult.directUpload) {
+        const { uploadUrl, storagePath, mediaType } = initResult as DirectUploadInitResponse
+
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': values.file.type ?? 'application/octet-stream',
+          },
+          body: values.file,
+        })
+
+        if (!uploadResponse.ok) throw new Error('Direct upload failed')
+
+        formData.append('mediaPath', storagePath)
+        formData.append('mediaType', mediaType)
+      } else {
+        formData.append('file', values.file)
+      }
+
       const response = await fetch(`/api/capsules/${capsuleId}/upload`, {
         method: 'POST',
         body: formData,
