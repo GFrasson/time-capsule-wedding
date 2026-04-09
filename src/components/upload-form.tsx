@@ -125,7 +125,15 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
         body: formData,
       })
 
-      if (!response.ok) throw new Error('Upload failed')
+      if (!response.ok) {
+        const data = await response.json().catch(() => null)
+        const errorMessage =
+          typeof data?.error === 'string' && data.error.trim().length > 0
+            ? data.error
+            : 'Não foi possível enviar sua mensagem agora. Tente novamente em instantes.'
+
+        throw new Error(errorMessage)
+      }
 
       toast.success('Mensagem enviada com sucesso!')
       // Reset form
@@ -133,7 +141,12 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
       setPreview(null)
     } catch (error) {
       console.error(error)
-      toast.error('Erro ao enviar mensagem. Tente novamente.')
+      const message =
+        error instanceof Error && error.message
+          ? error.message
+          : 'Não foi possível enviar sua mensagem agora. Tente novamente em instantes.'
+
+      toast.error(message)
     } finally {
       setIsUploading(false)
     }

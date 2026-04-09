@@ -26,7 +26,7 @@ export async function POST(
     const hasFileUpload = Boolean(file && file.size > 0)
 
     if (!hasDirectUpload && !hasFileUpload) {
-      return NextResponse.json({ error: 'File or uploaded media reference is required' }, { status: 400 })
+      return NextResponse.json({ error: 'Selecione uma foto ou vídeo para enviar.' }, { status: 400 })
     }
 
     let mediaUrl = ''
@@ -68,6 +68,9 @@ export async function POST(
     return NextResponse.json({ success: true, message })
   } catch (error) {
     console.error('Upload error:', error)
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Ocorreu um erro ao enviar sua mensagem. Tente novamente.' },
+      { status: 500 }
+    )
   }
 }
