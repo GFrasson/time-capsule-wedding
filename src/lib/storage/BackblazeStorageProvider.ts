@@ -8,6 +8,7 @@ export class BackblazeStorageProvider implements IStorageProvider {
   private bucketName = process.env.BACKBLAZE_BUCKET_NAME ?? '';
   private bucketFolder = process.env.BACKBLAZE_BUCKET_FOLDER ?? 'wedding_capsule';
   private signedUrlExpiresInSeconds = Number(process.env.BACKBLAZE_SIGNED_URL_EXPIRES_IN_SECONDS ?? '300');
+  private objectCacheControl = 'public, max-age=31536000, immutable';
 
   constructor() {
     this.s3 = new S3Client({
@@ -39,6 +40,7 @@ export class BackblazeStorageProvider implements IStorageProvider {
       Key: key,
       Body: buffer,
       ContentType: mimeType,
+      CacheControl: this.objectCacheControl,
     });
 
     await this.s3.send(command);
@@ -55,6 +57,7 @@ export class BackblazeStorageProvider implements IStorageProvider {
       Bucket: this.bucketName,
       Key: key,
       ContentType: mimeType,
+      CacheControl: this.objectCacheControl,
     });
 
     const uploadUrl = await getSignedUrl(this.s3, command, {
