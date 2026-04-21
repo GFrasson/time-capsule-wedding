@@ -47,5 +47,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/capsules/:path*', '/api/capsules/:path*/upload'],
+  matcher: ['/capsules/:path*'],
 }
