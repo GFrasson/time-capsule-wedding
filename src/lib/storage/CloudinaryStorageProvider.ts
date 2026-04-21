@@ -51,4 +51,8 @@ export class CloudinaryStorageProvider implements IStorageProvider {
   async getDownloadUrl(storagePath: string): Promise<string> {
     return storagePath;
   }
+
+  async createPresignedUpload() {
+    return null;
+  }
 }

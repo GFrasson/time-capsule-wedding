@@ -50,6 +50,28 @@ Uma aplicação moderna e elegante para convidados compartilharem mensagens, fot
    NEXT_PUBLIC_CAPSULE_ACCESS_TOKEN="um-token-secreto-forte"
    ```
 
+   Se você usar uploads client-side com URLs assinadas do Backblaze, também precisa configurar CORS no bucket para aceitar `PUT` e `OPTIONS` a partir das origens do app. Sem isso, o navegador vai bloquear o upload com erro de preflight.
+
+   Exemplo de CORS para a API S3-Compatible do Backblaze:
+   ```xml
+   <CORSConfiguration>
+     <CORSRule>
+       <ID>allow-direct-uploads</ID>
+       <AllowedOrigin>http://localhost:3000</AllowedOrigin>
+       <AllowedOrigin>https://SEU-DOMINIO-VERCEL.vercel.app</AllowedOrigin>
+       <AllowedMethod>PUT</AllowedMethod>
+       <AllowedMethod>GET</AllowedMethod>
+       <AllowedMethod>HEAD</AllowedMethod>
+       <AllowedHeader>*</AllowedHeader>
+       <ExposeHeader>ETag</ExposeHeader>
+       <ExposeHeader>x-amz-request-id</ExposeHeader>
+       <MaxAgeSeconds>3600</MaxAgeSeconds>
+     </CORSRule>
+   </CORSConfiguration>
+   ```
+
+   O ponto principal é que a origem precisa bater exatamente com o frontend, por exemplo `http://localhost:3000` no desenvolvimento e o domínio real publicado em produção.
+
 3. **Configure o Banco de Dados**:
    ```bash
    npx prisma migrate dev --name init

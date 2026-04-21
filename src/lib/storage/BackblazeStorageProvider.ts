@@ -1,13 +1,14 @@
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { IStorageProvider, UploadResult } from './IStorageProvider';
+import { IStorageProvider, PresignedUploadTarget, UploadResult } from './IStorageProvider';
 import crypto from 'crypto';
 
 export class BackblazeStorageProvider implements IStorageProvider {
   private s3: S3Client;
   private bucketName = process.env.BACKBLAZE_BUCKET_NAME ?? '';
   private bucketFolder = process.env.BACKBLAZE_BUCKET_FOLDER ?? 'wedding_capsule';
-  private signedUrlExpiresInSeconds= Number(process.env.BACKBLAZE_SIGNED_URL_EXPIRES_IN_SECONDS ?? '300');
+  private signedUrlExpiresInSeconds = Number(process.env.BACKBLAZE_SIGNED_URL_EXPIRES_IN_SECONDS ?? '300');
+  private objectCacheControl = 'public, max-age=31536000, immutable';
 
   constructor() {
     this.s3 = new S3Client({
@@ -17,30 +18,56 @@ export class BackblazeStorageProvider implements IStorageProvider {
         accessKeyId: process.env.BACKBLAZE_KEY_ID ?? '',
         secretAccessKey: process.env.BACKBLAZE_APPLICATION_KEY ?? '',
       },
-      // Force path style is occasionally needed for some S3 compatible APIs
-      // forcePathStyle: true, 
     });
   }
 
-  async upload(buffer: Buffer, originalFilename: string, mimeType: string): Promise<UploadResult> {
+  private buildStoragePath(originalFilename: string) {
     const extension = originalFilename.split('.').pop();
     const uniqueName = crypto.randomUUID() + (extension ? `.${extension}` : '');
-    const key = `${this.bucketFolder}/${uniqueName}`;
+
+    return `${this.bucketFolder}/${uniqueName}`;
+  }
+
+  private resolveMediaType(mimeType: string): 'IMAGE' | 'VIDEO' {
+    return mimeType.startsWith('video/') ? 'VIDEO' : 'IMAGE';
+  }
+
+  async upload(buffer: Buffer, originalFilename: string, mimeType: string): Promise<UploadResult> {
+    const key = this.buildStoragePath(originalFilename);
 
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: key,
       Body: buffer,
       ContentType: mimeType,
+      CacheControl: this.objectCacheControl,
     });
 
     await this.s3.send(command);
 
-    const isVideo = mimeType.startsWith('video/');
-    
     return {
       storagePath: key,
-      mediaType: isVideo ? 'VIDEO' : 'IMAGE',
+      mediaType: this.resolveMediaType(mimeType),
+    };
+  }
+
+  async createPresignedUpload(originalFilename: string, mimeType: string): Promise<PresignedUploadTarget> {
+    const key = this.buildStoragePath(originalFilename);
+    const command = new PutObjectCommand({
+      Bucket: this.bucketName,
+      Key: key,
+      ContentType: mimeType,
+      CacheControl: this.objectCacheControl,
+    });
+
+    const uploadUrl = await getSignedUrl(this.s3, command, {
+      expiresIn: this.signedUrlExpiresInSeconds,
+    });
+
+    return {
+      uploadUrl,
+      storagePath: key,
+      mediaType: this.resolveMediaType(mimeType),
     };
   }
 
