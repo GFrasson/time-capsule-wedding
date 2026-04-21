@@ -10,10 +10,6 @@ export function isProtectedCapsuleRoute(pathname: string) {
     return true
   }
 
-  if (pathname.startsWith('/api/capsules/') && pathname.endsWith('/upload')) {
-    return true
-  }
-
   return false
 }
 
