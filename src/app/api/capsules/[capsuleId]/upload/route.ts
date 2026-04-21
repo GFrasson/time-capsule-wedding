@@ -1,18 +1,33 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { storageProvider } from '@/lib/storage'
+import { getCapsuleAccessConfig } from '@/lib/capsule-access/config'
+import { ACCESS_COOKIE_NAME, hasValidAccessCookie } from '@/lib/capsule-access/cookie'
 
 interface Params {
   capsuleId: string
 }
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<Params> }
 ) {
   const { capsuleId } = await params
 
   try {
+    const accessConfig = getCapsuleAccessConfig()
+
+    if (accessConfig) {
+      const hasAccess = await hasValidAccessCookie(
+        request.cookies.get(ACCESS_COOKIE_NAME)?.value,
+        accessConfig.cookieSecret
+      )
+
+      if (!hasAccess) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
+    }
+
     const formData = await request.formData()
     const file = formData.get('file') as File | null
     const sender = formData.get('sender') as string
