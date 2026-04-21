@@ -1,7 +1,7 @@
 'use client'
 
 import { QRCodeSVG } from 'qrcode.react'
-import { useEffect, useState } from 'react'
+import { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Download } from 'lucide-react'
@@ -11,11 +11,17 @@ interface QRCodeGeneratorProps {
 }
 
 export function QRCodeGenerator({ capsuleId }: QRCodeGeneratorProps) {
-  const [url, setUrl] = useState('')
+  const url = useMemo(() => {
+    if (typeof window === 'undefined') return ''
 
-  useEffect(() => {
-    // Generate URL for the upload page with capsuleId
-    setUrl(`${window.location.origin}/capsules/${capsuleId}/upload`)
+    const uploadUrl = new URL(`${window.location.origin}/capsules/${capsuleId}/upload`)
+    const inviteToken = process.env.NEXT_PUBLIC_CAPSULE_ACCESS_TOKEN
+
+    if (inviteToken) {
+      uploadUrl.searchParams.set('invite', inviteToken)
+    }
+
+    return uploadUrl.toString()
   }, [capsuleId])
 
   if (!url) return null
