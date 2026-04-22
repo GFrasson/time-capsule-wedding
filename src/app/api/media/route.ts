@@ -12,21 +12,9 @@ const proxyResponseHeaders = [
   'last-modified',
 ] as const;
 
-function getRouteCacheControl() {
-  return process.env.STORAGE_PROVIDER === 'cloudinary'
-    ? 'public, max-age=86400, stale-while-revalidate=604800'
-    : browserCacheControl;
-}
-
 function getRouteHeaders() {
-  if (process.env.STORAGE_PROVIDER === 'cloudinary') {
-    return new Headers({
-      'Cache-Control': getRouteCacheControl(),
-    });
-  }
-
   return new Headers({
-    'Cache-Control': getRouteCacheControl(),
+    'Cache-Control': browserCacheControl,
     'CDN-Cache-Control': vercelCdnCacheControl,
     'Vercel-CDN-Cache-Control': vercelCdnCacheControl,
   });
@@ -43,12 +31,6 @@ export async function GET(request: NextRequest) {
   }
 
   const downloadUrl = await storageProvider.getDownloadUrl(storagePath);
-
-  if (process.env.STORAGE_PROVIDER === 'cloudinary') {
-    return NextResponse.redirect(downloadUrl, {
-      headers: getRouteHeaders(),
-    });
-  }
 
   const upstreamHeaders = new Headers();
   const range = request.headers.get('range');

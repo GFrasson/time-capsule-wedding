@@ -21,19 +21,12 @@ function createRequest(url: string, headers?: HeadersInit) {
 }
 
 describe('GET /api/media', () => {
-  const originalStorageProvider = process.env.STORAGE_PROVIDER
   const fetchMock = vi.fn<typeof fetch>()
 
   beforeEach(() => {
     storageMocks.getDownloadUrl.mockReset()
     fetchMock.mockReset()
     vi.stubGlobal('fetch', fetchMock)
-
-    if (originalStorageProvider === undefined) {
-      delete process.env.STORAGE_PROVIDER
-    } else {
-      process.env.STORAGE_PROVIDER = originalStorageProvider
-    }
   })
 
   it('returns 400 when the media path is missing', async () => {
@@ -51,26 +44,7 @@ describe('GET /api/media', () => {
     expect(fetchMock).not.toHaveBeenCalled()
   })
 
-  it('redirects to the storage asset when the provider is cloudinary', async () => {
-    process.env.STORAGE_PROVIDER = 'cloudinary'
-    storageMocks.getDownloadUrl.mockResolvedValue('https://cdn.example/capsules/photo.jpg')
-
-    const request = createRequest('http://localhost/api/media?path=capsules/photo.jpg')
-
-    const response = await GET(request)
-
-    expect(response.status).toBe(307)
-    expect(response.headers.get('location')).toBe('https://cdn.example/capsules/photo.jpg')
-    expect(response.headers.get('cache-control')).toBe(
-      'public, max-age=86400, stale-while-revalidate=604800'
-    )
-    expect(response.headers.get('cdn-cache-control')).toBeNull()
-    expect(storageMocks.getDownloadUrl).toHaveBeenCalledWith('capsules/photo.jpg')
-    expect(fetchMock).not.toHaveBeenCalled()
-  })
-
-  it('proxies partial upstream responses for non-cloudinary providers', async () => {
-    process.env.STORAGE_PROVIDER = 'backblaze'
+  it('proxies partial upstream responses for Backblaze assets', async () => {
     storageMocks.getDownloadUrl.mockResolvedValue('https://storage.example/capsules/video.mp4')
     fetchMock.mockResolvedValue(
       new Response('partial-media', {
@@ -117,7 +91,6 @@ describe('GET /api/media', () => {
   })
 
   it('returns the upstream error status when fetching the media asset fails', async () => {
-    process.env.STORAGE_PROVIDER = 'backblaze'
     storageMocks.getDownloadUrl.mockResolvedValue('https://storage.example/capsules/photo.jpg')
     fetchMock.mockResolvedValue(
       new Response('not found', {

@@ -21,4 +21,4 @@ There is currently no dedicated automated test suite in the repository. Until on
 Recent history favors short, imperative commit subjects with prefixes such as `feat:` and `refactor:`. Keep commits focused, for example `feat: add capsule share page`. PRs should include a brief summary, note any schema or environment changes, link the related task or issue, and attach screenshots for UI changes. Call out new Prisma migrations explicitly so reviewers can validate deployment impact.
 
 ## Security & Configuration Tips
-Keep secrets in `.env` only; do not commit credentials. The app depends on PostgreSQL, Cloudinary and Backblaze settings.
+Keep secrets in `.env` only; do not commit credentials. The app depends on PostgreSQL and Backblaze settings.
