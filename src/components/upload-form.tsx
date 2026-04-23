@@ -70,21 +70,6 @@ interface DirectUploadInitResponse {
   mediaType: 'IMAGE' | 'VIDEO'
 }
 
-type UploadInitResponse = DirectUploadInitResponse | { directUpload: false }
-
-type PreparedUpload =
-  | {
-      kind: 'direct'
-      mediaPath: string
-      mediaType: 'IMAGE' | 'VIDEO'
-      order: number
-    }
-  | {
-      kind: 'fallback'
-      file: File
-      order: number
-    }
-
 async function getResponseErrorMessage(response: Response, fallback: string) {
   const data = await response.json().catch(() => null)
 
@@ -130,8 +115,8 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
     setIsUploading(true)
 
     try {
-      const preparedUploads = await Promise.all(
-        values.files.map(async (file, order): Promise<PreparedUpload> => {
+      const directUploads = await Promise.all(
+        values.files.map(async (file, order) => {
           const initResponse = await fetch(`/api/capsules/${capsuleId}/upload/init`, {
             method: 'POST',
             headers: {
@@ -153,15 +138,7 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
             )
           }
 
-          const initResult = (await initResponse.json()) as UploadInitResponse
-
-          if (!initResult.directUpload) {
-            return {
-              kind: 'fallback',
-              file,
-              order,
-            }
-          }
+          const initResult = (await initResponse.json()) as DirectUploadInitResponse
 
           const uploadResponse = await fetch(initResult.uploadUrl, {
             method: 'PUT',
@@ -176,7 +153,6 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
           }
 
           return {
-            kind: 'direct',
             mediaPath: initResult.storagePath,
             mediaType: initResult.mediaType,
             order,
@@ -190,18 +166,12 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
       if (values.sender) formData.append('sender', values.sender)
       if (values.content) formData.append('content', values.content)
 
-      preparedUploads
+      directUploads
         .sort((left, right) => left.order - right.order)
         .forEach((upload) => {
-          if (upload.kind === 'direct') {
-            formData.append('mediaPath', upload.mediaPath)
-            formData.append('mediaType', upload.mediaType)
-            formData.append('mediaOrder', String(upload.order))
-            return
-          }
-
-          formData.append('file', upload.file)
-          formData.append('fileOrder', String(upload.order))
+          formData.append('mediaPath', upload.mediaPath)
+          formData.append('mediaType', upload.mediaType)
+          formData.append('mediaOrder', String(upload.order))
         })
 
       const response = await fetch(`/api/capsules/${capsuleId}/upload`, {

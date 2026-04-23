@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { storageProvider } from '@/lib/storage'
 import { getCapsuleAccessConfig } from '@/lib/capsule-access/config'
 import { ACCESS_COOKIE_NAME, hasValidAccessCookie } from '@/lib/capsule-access/cookie'
 import {
   getMediaBatchValidationError,
-  getMediaValidationError,
   getMessageMediaType,
 } from '@/lib/upload-validation'
 import type { MessageMediaType } from '@/lib/upload-validation'
@@ -20,19 +18,8 @@ type DirectUploadAsset = {
   storagePath: string
 }
 
-type PendingFileUpload = {
-  file: File
-  sortOrder: number
-}
-
 function getStringEntries(values: FormDataEntryValue[]) {
   return values.filter((value): value is string => typeof value === 'string')
-}
-
-function getFileEntries(values: FormDataEntryValue[]) {
-  return values.filter(
-    (value): value is File => value instanceof File && value.size > 0
-  )
 }
 
 function isValidSortOrder(value: number) {
@@ -76,32 +63,6 @@ function parseDirectUploadAssets(formData: FormData) {
   return assets
 }
 
-function parsePendingFileUploads(formData: FormData) {
-  const files = getFileEntries(formData.getAll('file'))
-  const fileOrders = getStringEntries(formData.getAll('fileOrder'))
-
-  if (files.length !== fileOrders.length) {
-    return null
-  }
-
-  const uploads: PendingFileUpload[] = []
-
-  for (let index = 0; index < files.length; index += 1) {
-    const sortOrder = Number(fileOrders[index])
-
-    if (!isValidSortOrder(sortOrder)) {
-      return null
-    }
-
-    uploads.push({
-      file: files[index],
-      sortOrder,
-    })
-  }
-
-  return uploads
-}
-
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<Params> }
@@ -126,42 +87,23 @@ export async function POST(
     const sender = formData.get('sender') as string
     const content = formData.get('content') as string
     const title = formData.get('title') as string
-
     const directUploadAssets = parseDirectUploadAssets(formData)
-    const pendingFileUploads = parsePendingFileUploads(formData)
 
-    if (!directUploadAssets || !pendingFileUploads) {
+    if (!directUploadAssets) {
       return NextResponse.json(
         { error: 'Dados de mídia inválidos.' },
         { status: 400 }
       )
     }
 
-    if (
-      directUploadAssets.length === 0 &&
-      pendingFileUploads.length === 0
-    ) {
+    if (directUploadAssets.length === 0) {
       return NextResponse.json(
         { error: 'Selecione ao menos uma foto ou vídeo para enviar.' },
         { status: 400 }
       )
     }
 
-    for (const { file } of pendingFileUploads) {
-      const validationError = getMediaValidationError(
-        file.type || 'application/octet-stream',
-        file.size
-      )
-
-      if (validationError) {
-        return NextResponse.json({ error: validationError }, { status: 400 })
-      }
-    }
-
-    const allSortOrders = [
-      ...directUploadAssets.map((asset) => asset.sortOrder),
-      ...pendingFileUploads.map((upload) => upload.sortOrder),
-    ]
+    const allSortOrders = directUploadAssets.map((asset) => asset.sortOrder)
 
     if (!hasUniqueSortOrders(allSortOrders)) {
       return NextResponse.json(
@@ -170,43 +112,15 @@ export async function POST(
       )
     }
 
-    const batchValidationError = getMediaBatchValidationError([
-      ...directUploadAssets.map((asset) => asset.mediaType),
-      ...pendingFileUploads.map(
-        ({ file }) => file.type || 'application/octet-stream'
-      ),
-    ])
+    const batchValidationError = getMediaBatchValidationError(
+      directUploadAssets.map((asset) => asset.mediaType)
+    )
 
     if (batchValidationError) {
       return NextResponse.json({ error: batchValidationError }, { status: 400 })
     }
 
-    const uploadedAssets = await Promise.all(
-      pendingFileUploads.map(async ({ file, sortOrder }) => {
-        const arrayBuffer = await file.arrayBuffer()
-        const buffer = Buffer.from(arrayBuffer)
-        const mimeType = file.type || 'application/octet-stream'
-        const originalFilename = file.name || 'unnamed_file'
-        const uploadResult = await storageProvider.upload(
-          buffer,
-          originalFilename,
-          mimeType
-        )
-        const mediaType = getMessageMediaType(uploadResult.mediaType)
-
-        if (!mediaType) {
-          throw new Error('Storage provider returned unsupported media type')
-        }
-
-        return {
-          storagePath: uploadResult.storagePath,
-          mediaType,
-          sortOrder,
-        }
-      })
-    )
-
-    const assets = [...directUploadAssets, ...uploadedAssets].sort(
+    const assets = directUploadAssets.sort(
       (left, right) => left.sortOrder - right.sortOrder
     )
     const messageType = assets[0]?.mediaType

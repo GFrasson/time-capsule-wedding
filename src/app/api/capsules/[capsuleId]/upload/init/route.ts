@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server'
 import { storageProvider } from '@/lib/storage'
 import { getMediaValidationError } from '@/lib/upload-validation'
 
-export async function POST(
-  request: Request,
-) {
+export async function POST(request: Request) {
   try {
     const body = await request.json()
     const originalFilename = body.originalFilename as string | undefined
@@ -12,7 +10,10 @@ export async function POST(
     const fileSize = body.fileSize as number | undefined
 
     if (!originalFilename || !mimeType) {
-      return NextResponse.json({ error: 'originalFilename and mimeType are required' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'originalFilename and mimeType are required' },
+        { status: 400 }
+      )
     }
 
     const validationError = getMediaValidationError(mimeType, fileSize)
@@ -21,11 +22,10 @@ export async function POST(
       return NextResponse.json({ error: validationError }, { status: 400 })
     }
 
-    const uploadTarget = await storageProvider.createPresignedUpload?.(originalFilename, mimeType)
-
-    if (!uploadTarget) {
-      return NextResponse.json({ directUpload: false }, { status: 200 })
-    }
+    const uploadTarget = await storageProvider.createPresignedUpload(
+      originalFilename,
+      mimeType
+    )
 
     return NextResponse.json({
       directUpload: true,

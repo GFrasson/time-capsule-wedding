@@ -14,10 +14,6 @@ const prismaMocks = vi.hoisted(() => ({
   messageCreate: vi.fn(),
 }))
 
-const storageMocks = vi.hoisted(() => ({
-  upload: vi.fn(),
-}))
-
 const accessMocks = vi.hoisted(() => ({
   getCapsuleAccessConfig: vi.fn(),
   hasValidAccessCookie: vi.fn(),
@@ -28,12 +24,6 @@ vi.mock('@/lib/prisma', () => ({
     message: {
       create: prismaMocks.messageCreate,
     },
-  },
-}))
-
-vi.mock('@/lib/storage', () => ({
-  storageProvider: {
-    upload: storageMocks.upload,
   },
 }))
 
@@ -72,18 +62,6 @@ function createParams() {
   return Promise.resolve({ capsuleId: 'capsule-123' })
 }
 
-function createFile(name: string, type: string, contents = name) {
-  const file = new File([contents], name, { type })
-
-  Object.defineProperty(file, 'arrayBuffer', {
-    value: vi
-      .fn()
-      .mockResolvedValue(new TextEncoder().encode(contents).buffer),
-  })
-
-  return file
-}
-
 function createDirectUploadEntries(
   count: number,
   mediaType: 'IMAGE' | 'VIDEO',
@@ -105,7 +83,6 @@ function createDirectUploadEntries(
 describe('POST /api/capsules/[capsuleId]/upload', () => {
   beforeEach(() => {
     prismaMocks.messageCreate.mockReset()
-    storageMocks.upload.mockReset()
     accessMocks.getCapsuleAccessConfig.mockReset()
     accessMocks.hasValidAccessCookie.mockReset()
 
@@ -117,12 +94,6 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
       type: 'IMAGE',
       assets: [],
     })
-    storageMocks.upload.mockImplementation(
-      async (_buffer: Buffer, originalFilename: string, mimeType: string) => ({
-        storagePath: `capsules/capsule-123/${originalFilename}`,
-        mediaType: mimeType.startsWith('video/') ? 'VIDEO' : 'IMAGE',
-      })
-    )
   })
 
   it('returns 403 when the capsule is protected and the access cookie is invalid', async () => {
@@ -151,7 +122,7 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
-  it('returns 400 when neither a direct upload nor a file upload is provided', async () => {
+  it('returns 400 when no direct uploads are provided', async () => {
     const request = createRequest([
       ['sender', 'Alice'],
       ['content', 'Parabens!'],
@@ -167,7 +138,6 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     await expect(response.json()).resolves.toEqual({
       error: 'Selecione ao menos uma foto ou vídeo para enviar.',
     })
-    expect(storageMocks.upload).not.toHaveBeenCalled()
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
@@ -227,7 +197,6 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
       'signed-cookie',
       'cookie-secret'
     )
-    expect(storageMocks.upload).not.toHaveBeenCalled()
     expect(prismaMocks.messageCreate).toHaveBeenCalledWith({
       data: {
         sender: 'Alice',
@@ -290,7 +259,6 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     )
 
     expect(response.status).toBe(200)
-    expect(storageMocks.upload).not.toHaveBeenCalled()
     expect(prismaMocks.messageCreate).toHaveBeenCalledWith({
       data: {
         sender: 'Carol',
@@ -359,7 +327,6 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     await expect(response.json()).resolves.toEqual({
       error: 'Envie no máximo 10 imagens por mensagem.',
     })
-    expect(storageMocks.upload).not.toHaveBeenCalled()
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
@@ -382,7 +349,6 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     await expect(response.json()).resolves.toEqual({
       error: 'Não é possível misturar imagens e vídeos na mesma mensagem.',
     })
-    expect(storageMocks.upload).not.toHaveBeenCalled()
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
@@ -405,36 +371,14 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     await expect(response.json()).resolves.toEqual({
       error: 'Envie apenas 1 vídeo por mensagem.',
     })
-    expect(storageMocks.upload).not.toHaveBeenCalled()
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
-  it('uploads multiple files to storage and creates a single message record', async () => {
-    prismaMocks.messageCreate.mockResolvedValue({
-      id: 'message-4',
-      capsuleId: 'capsule-123',
-      type: 'IMAGE',
-      assets: [
-        {
-          id: 'asset-1',
-          storagePath: 'capsules/capsule-123/photo-1.jpg',
-          sortOrder: 0,
-        },
-        {
-          id: 'asset-2',
-          storagePath: 'capsules/capsule-123/photo-2.jpg',
-          sortOrder: 1,
-        },
-      ],
-    })
-
+  it('returns 400 when media metadata is malformed', async () => {
     const request = createRequest([
-      ['file', createFile('photo-1.jpg', 'image/jpeg', 'image-1')],
-      ['fileOrder', '0'],
-      ['file', createFile('photo-2.jpg', 'image/jpeg', 'image-2')],
-      ['fileOrder', '1'],
-      ['sender', 'Bob'],
-      ['content', 'Te amo'],
+      ['mediaPath', 'capsules/capsule-123/photo.jpg'],
+      ['mediaType', 'IMAGE'],
+      ['mediaOrder', 'not-a-number'],
     ])
 
     const response = await POST(
@@ -442,62 +386,11 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
       { params: createParams() }
     )
 
-    expect(response.status).toBe(200)
-    expect(storageMocks.upload).toHaveBeenCalledTimes(2)
-    expect(storageMocks.upload.mock.calls).toEqual(
-      expect.arrayContaining([
-        [expect.any(Buffer), 'photo-1.jpg', 'image/jpeg'],
-        [expect.any(Buffer), 'photo-2.jpg', 'image/jpeg'],
-      ])
-    )
-    expect(prismaMocks.messageCreate).toHaveBeenCalledWith({
-      data: {
-        sender: 'Bob',
-        content: 'Te amo',
-        title: null,
-        type: 'IMAGE',
-        capsuleId: 'capsule-123',
-        assets: {
-          create: [
-            {
-              storagePath: 'capsules/capsule-123/photo-1.jpg',
-              sortOrder: 0,
-            },
-            {
-              storagePath: 'capsules/capsule-123/photo-2.jpg',
-              sortOrder: 1,
-            },
-          ],
-        },
-      },
-      include: {
-        assets: {
-          orderBy: {
-            sortOrder: 'asc',
-          },
-        },
-      },
-    })
+    expect(response.status).toBe(400)
     await expect(response.json()).resolves.toEqual({
-      success: true,
-      message: {
-        id: 'message-4',
-        capsuleId: 'capsule-123',
-        type: 'IMAGE',
-        assets: [
-          {
-            id: 'asset-1',
-            storagePath: 'capsules/capsule-123/photo-1.jpg',
-            sortOrder: 0,
-          },
-          {
-            id: 'asset-2',
-            storagePath: 'capsules/capsule-123/photo-2.jpg',
-            sortOrder: 1,
-          },
-        ],
-      },
+      error: 'Dados de mídia inválidos.',
     })
+    expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
   it('returns 500 when an unexpected error happens during persistence', async () => {

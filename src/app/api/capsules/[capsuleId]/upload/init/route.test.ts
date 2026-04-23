@@ -59,30 +59,6 @@ describe('POST /api/capsules/[capsuleId]/upload/init', () => {
     expect(storageMocks.createPresignedUpload).not.toHaveBeenCalled()
   })
 
-  it('returns directUpload false when the storage provider does not support presigned uploads', async () => {
-    storageMocks.createPresignedUpload.mockResolvedValue(null)
-
-    const request = new Request('http://localhost/api/capsules/test/upload/init', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        originalFilename: 'photo.jpg',
-        mimeType: 'image/jpeg',
-        fileSize: 1024,
-      }),
-    })
-
-    const response = await POST(request)
-
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({
-      directUpload: false,
-    })
-    expect(storageMocks.createPresignedUpload).toHaveBeenCalledWith('photo.jpg', 'image/jpeg')
-  })
-
   it('returns the presigned upload target when direct upload is available', async () => {
     storageMocks.createPresignedUpload.mockResolvedValue({
       uploadUrl: 'https://storage.example/upload',
