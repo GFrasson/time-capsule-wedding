@@ -10,26 +10,39 @@ datasource db {
 }
 
 model Message {
-  id        String   @id @default(cuid())
-  type      String // TEXT, IMAGE, VIDEO
+  id        String         @id @default(cuid())
+  type      String // IMAGE, VIDEO
   content   String? // Text content
   title     String? // Title of the message
-  mediaUrl  String // URL to media (Required)
   sender    String?
-  createdAt DateTime @default(now())
+  createdAt DateTime       @default(now())
 
   capsuleId String
-  capsule   Capsule @relation(fields: [capsuleId], references: [id])
+  capsule   Capsule        @relation(fields: [capsuleId], references: [id])
+  assets    MessageAsset[]
+}
+
+model MessageAsset {
+  id         String   @id @default(cuid())
+  storagePath String
+  sortOrder  Int
+  createdAt  DateTime @default(now())
+
+  messageId String
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, sortOrder])
+  @@index([messageId, sortOrder])
 }
 
 model Capsule {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   title       String
   description String?
   unlockDate  DateTime
   coverUrl    String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   messages Message[]
 }

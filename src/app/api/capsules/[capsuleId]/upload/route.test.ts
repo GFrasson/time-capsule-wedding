@@ -8,12 +8,41 @@ type UploadRouteRequest = {
   formData: () => Promise<FormData>
 }
 
+type RequestEntry = [string, string | File]
+type MediaAssetEntry = {
+  storagePath: string
+  mediaType: string
+  sortOrder: number | string
+}
+type UploadEntryOptions = {
+  assets?: MediaAssetEntry[]
+  sender?: string
+  content?: string
+  title?: string
+}
+type CreatedAsset = {
+  storagePath: string
+  sortOrder: number
+}
+type ExpectedMessageCreate = {
+  sender?: string | null
+  content?: string | null
+  title?: string | null
+  type: 'IMAGE' | 'VIDEO'
+  assets: CreatedAsset[]
+}
+
+const CAPSULE_ID = 'capsule-123'
+const MESSAGE_INCLUDE = {
+  assets: {
+    orderBy: {
+      sortOrder: 'asc',
+    },
+  },
+}
+
 const prismaMocks = vi.hoisted(() => ({
   messageCreate: vi.fn(),
-}))
-
-const storageMocks = vi.hoisted(() => ({
-  upload: vi.fn(),
 }))
 
 const accessMocks = vi.hoisted(() => ({
@@ -29,12 +58,6 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/storage', () => ({
-  storageProvider: {
-    upload: storageMocks.upload,
-  },
-}))
-
 vi.mock('@/lib/capsule-access/config', () => ({
   getCapsuleAccessConfig: accessMocks.getCapsuleAccessConfig,
 }))
@@ -44,15 +67,14 @@ vi.mock('@/lib/capsule-access/cookie', () => ({
   hasValidAccessCookie: accessMocks.hasValidAccessCookie,
 }))
 
-
 function createRequest(
-  entries: Array<[string, string | File]>,
+  entries: RequestEntry[],
   cookieValue?: string
 ): UploadRouteRequest {
   const formData = new FormData()
 
   for (const [key, value] of entries) {
-    formData.set(key, value)
+    formData.append(key, value)
   }
 
   return {
@@ -68,13 +90,121 @@ function createRequest(
 }
 
 function createParams() {
-  return Promise.resolve({ capsuleId: 'capsule-123' })
+  return Promise.resolve({ capsuleId: CAPSULE_ID })
+}
+
+function createDirectUploadEntries(
+  count: number,
+  mediaType: 'IMAGE' | 'VIDEO',
+  filenameFactory: (index: number) => string
+): RequestEntry[] {
+  const entries: RequestEntry[] = []
+
+  for (let index = 0; index < count; index += 1) {
+    entries.push(
+      ['mediaPath', filenameFactory(index)],
+      ['mediaType', mediaType],
+      ['mediaOrder', String(index)]
+    )
+  }
+
+  return entries
+}
+
+function appendOptionalEntry(
+  entries: RequestEntry[],
+  key: string,
+  value?: string
+) {
+  if (value !== undefined) {
+    entries.push([key, value])
+  }
+}
+
+function createMediaEntries(assets: MediaAssetEntry[]): RequestEntry[] {
+  const entries: RequestEntry[] = []
+
+  for (const { storagePath, mediaType, sortOrder } of assets) {
+    entries.push(
+      ['mediaPath', storagePath],
+      ['mediaType', mediaType],
+      ['mediaOrder', String(sortOrder)]
+    )
+  }
+
+  return entries
+}
+
+function createUploadEntries({
+  assets = [],
+  sender,
+  content,
+  title,
+}: UploadEntryOptions): RequestEntry[] {
+  const entries = createMediaEntries(assets)
+
+  appendOptionalEntry(entries, 'sender', sender)
+  appendOptionalEntry(entries, 'content', content)
+  appendOptionalEntry(entries, 'title', title)
+
+  return entries
+}
+
+async function submitUpload(entries: RequestEntry[], cookieValue?: string) {
+  const request = createRequest(entries, cookieValue)
+  const response = await POST(
+    request as unknown as Parameters<typeof POST>[0],
+    { params: createParams() }
+  )
+
+  return { request, response }
+}
+
+async function expectErrorResponse(
+  response: Response,
+  status: number,
+  error: string
+) {
+  expect(response.status).toBe(status)
+  await expect(response.json()).resolves.toEqual({ error })
+}
+
+async function expectSuccessResponse(response: Response, message: unknown) {
+  expect(response.status).toBe(200)
+  await expect(response.json()).resolves.toEqual({
+    success: true,
+    message,
+  })
+}
+
+function expectMessageCreateCalledWith({
+  sender = null,
+  content = null,
+  title = null,
+  type,
+  assets,
+}: ExpectedMessageCreate) {
+  expect(prismaMocks.messageCreate).toHaveBeenCalledWith({
+    data: {
+      sender,
+      content,
+      title,
+      type,
+      capsuleId: CAPSULE_ID,
+      assets: {
+        create: assets.map(({ storagePath, sortOrder }) => ({
+          storagePath,
+          sortOrder,
+        })),
+      },
+    },
+    include: MESSAGE_INCLUDE,
+  })
 }
 
 describe('POST /api/capsules/[capsuleId]/upload', () => {
   beforeEach(() => {
     prismaMocks.messageCreate.mockReset()
-    storageMocks.upload.mockReset()
     accessMocks.getCapsuleAccessConfig.mockReset()
     accessMocks.hasValidAccessCookie.mockReset()
 
@@ -82,11 +212,9 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     accessMocks.hasValidAccessCookie.mockResolvedValue(false)
     prismaMocks.messageCreate.mockResolvedValue({
       id: 'message-1',
-      capsuleId: 'capsule-123',
-    })
-    storageMocks.upload.mockResolvedValue({
-      storagePath: 'capsules/capsule-123/photo.jpg',
-      mediaType: 'IMAGE',
+      capsuleId: CAPSULE_ID,
+      type: 'IMAGE',
+      assets: [],
     })
   })
 
@@ -97,17 +225,9 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     })
     accessMocks.hasValidAccessCookie.mockResolvedValue(false)
 
-    const request = createRequest([])
+    const { request, response } = await submitUpload([])
 
-    const response = await POST(
-      request as unknown as Parameters<typeof POST>[0],
-      { params: createParams() }
-    )
-
-    expect(response.status).toBe(403)
-    await expect(response.json()).resolves.toEqual({
-      error: 'Access denied',
-    })
+    await expectErrorResponse(response, 403, 'Access denied')
     expect(accessMocks.hasValidAccessCookie).toHaveBeenCalledWith(
       undefined,
       'cookie-secret'
@@ -116,23 +236,20 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
-  it('returns 400 when neither a direct upload nor a file upload is provided', async () => {
-    const request = createRequest([
-      ['sender', 'Alice'],
-      ['content', 'Parabens!'],
-      ['title', 'Memoria'],
-    ])
-
-    const response = await POST(
-      request as unknown as Parameters<typeof POST>[0],
-      { params: createParams() }
+  it('returns 400 when no direct uploads are provided', async () => {
+    const { response } = await submitUpload(
+      createUploadEntries({
+        sender: 'Alice',
+        content: 'Parabens!',
+        title: 'Memoria',
+      })
     )
 
-    expect(response.status).toBe(400)
-    await expect(response.json()).resolves.toEqual({
-      error: 'Selecione uma foto ou vídeo para enviar.',
-    })
-    expect(storageMocks.upload).not.toHaveBeenCalled()
+    await expectErrorResponse(
+      response,
+      400,
+      'Selecione ao menos uma foto ou v\u00eddeo para enviar.'
+    )
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
@@ -142,147 +259,226 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
       cookieSecret: 'cookie-secret',
     })
     accessMocks.hasValidAccessCookie.mockResolvedValue(true)
-    prismaMocks.messageCreate.mockResolvedValue({
-      id: 'message-2',
-      capsuleId: 'capsule-123',
-      mediaUrl: 'capsules/capsule-123/video.mp4',
-      type: 'VIDEO',
-    })
 
-    const request = createRequest(
-      [
-        ['mediaPath', 'capsules/capsule-123/video.mp4'],
-        ['mediaType', 'VIDEO'],
-        ['sender', 'Alice'],
-        ['content', 'Uma lembranca especial'],
-        ['title', 'Nosso video'],
+    const message = {
+      id: 'message-2',
+      capsuleId: CAPSULE_ID,
+      type: 'VIDEO',
+      assets: [
+        {
+          id: 'asset-1',
+          storagePath: `capsules/${CAPSULE_ID}/video.mp4`,
+          sortOrder: 0,
+        },
       ],
+    }
+
+    prismaMocks.messageCreate.mockResolvedValue(message)
+
+    const { response } = await submitUpload(
+      createUploadEntries({
+        assets: [
+          {
+            storagePath: `capsules/${CAPSULE_ID}/video.mp4`,
+            mediaType: 'VIDEO',
+            sortOrder: 0,
+          },
+        ],
+        sender: 'Alice',
+        content: 'Uma lembranca especial',
+        title: 'Nosso video',
+      }),
       'signed-cookie'
     )
 
-    const response = await POST(
-      request as unknown as Parameters<typeof POST>[0],
-      { params: createParams() }
-    )
-
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({
-      success: true,
-      message: {
-        id: 'message-2',
-        capsuleId: 'capsule-123',
-        mediaUrl: 'capsules/capsule-123/video.mp4',
-        type: 'VIDEO',
-      },
-    })
+    await expectSuccessResponse(response, message)
     expect(accessMocks.hasValidAccessCookie).toHaveBeenCalledWith(
       'signed-cookie',
       'cookie-secret'
     )
-    expect(storageMocks.upload).not.toHaveBeenCalled()
-    expect(prismaMocks.messageCreate).toHaveBeenCalledWith({
-      data: {
-        sender: 'Alice',
-        content: 'Uma lembranca especial',
-        title: 'Nosso video',
-        mediaUrl: 'capsules/capsule-123/video.mp4',
-        type: 'VIDEO',
-        capsuleId: 'capsule-123',
-      },
+    expectMessageCreateCalledWith({
+      sender: 'Alice',
+      content: 'Uma lembranca especial',
+      title: 'Nosso video',
+      type: 'VIDEO',
+      assets: [
+        {
+          storagePath: `capsules/${CAPSULE_ID}/video.mp4`,
+          sortOrder: 0,
+        },
+      ],
     })
   })
 
-  it('returns 400 when the uploaded file fails media validation', async () => {
-    const file = new File(['document'], 'notes.pdf', {
-      type: 'application/pdf',
-    })
-    const request = createRequest([['file', file]])
+  it('persists multiple direct upload images in the same message', async () => {
+    const message = {
+      id: 'message-3',
+      capsuleId: CAPSULE_ID,
+      type: 'IMAGE',
+      assets: [
+        {
+          id: 'asset-1',
+          storagePath: `capsules/${CAPSULE_ID}/photo-1.jpg`,
+          sortOrder: 0,
+        },
+        {
+          id: 'asset-2',
+          storagePath: `capsules/${CAPSULE_ID}/photo-2.jpg`,
+          sortOrder: 1,
+        },
+      ],
+    }
 
-    const response = await POST(
-      request as unknown as Parameters<typeof POST>[0],
-      { params: createParams() }
+    prismaMocks.messageCreate.mockResolvedValue(message)
+
+    const { response } = await submitUpload(
+      createUploadEntries({
+        assets: [
+          {
+            storagePath: `capsules/${CAPSULE_ID}/photo-1.jpg`,
+            mediaType: 'IMAGE',
+            sortOrder: 0,
+          },
+          {
+            storagePath: `capsules/${CAPSULE_ID}/photo-2.jpg`,
+            mediaType: 'IMAGE',
+            sortOrder: 1,
+          },
+        ],
+        sender: 'Carol',
+        content: 'Duas lembrancas em uma mensagem',
+      })
     )
 
-    expect(response.status).toBe(400)
-    await expect(response.json()).resolves.toEqual({
-      error: 'Apenas imagens e vídeos suportados são permitidos.',
+    expectMessageCreateCalledWith({
+      sender: 'Carol',
+      content: 'Duas lembrancas em uma mensagem',
+      type: 'IMAGE',
+      assets: [
+        {
+          storagePath: `capsules/${CAPSULE_ID}/photo-1.jpg`,
+          sortOrder: 0,
+        },
+        {
+          storagePath: `capsules/${CAPSULE_ID}/photo-2.jpg`,
+          sortOrder: 1,
+        },
+      ],
     })
-    expect(storageMocks.upload).not.toHaveBeenCalled()
+    await expectSuccessResponse(response, message)
+  })
+
+  it('returns 400 when more than 10 images are provided', async () => {
+    const { response } = await submitUpload(
+      createDirectUploadEntries(
+        11,
+        'IMAGE',
+        (index) => `capsules/${CAPSULE_ID}/photo-${index}.jpg`
+      )
+    )
+
+    await expectErrorResponse(
+      response,
+      400,
+      'Envie no m\u00e1ximo 10 imagens por mensagem.'
+    )
     expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
-  it('uploads the file to storage and creates the message record', async () => {
-    prismaMocks.messageCreate.mockResolvedValue({
-      id: 'message-3',
-      capsuleId: 'capsule-123',
-      mediaUrl: 'capsules/capsule-123/photo.jpg',
-      type: 'IMAGE',
-    })
-
-    const file = new File(['image-bytes'], 'photo.jpg', {
-      type: 'image/jpeg',
-    })
-    Object.defineProperty(file, 'arrayBuffer', {
-      value: vi
-        .fn()
-        .mockResolvedValue(new TextEncoder().encode('image-bytes').buffer),
-    })
-    const request = createRequest([
-      ['file', file],
-      ['sender', 'Bob'],
-      ['content', 'Te amo'],
-    ])
-
-    const response = await POST(
-      request as unknown as Parameters<typeof POST>[0],
-      { params: createParams() }
+  it('returns 400 when a direct upload mixes images and video', async () => {
+    const { response } = await submitUpload(
+      createUploadEntries({
+        assets: [
+          {
+            storagePath: `capsules/${CAPSULE_ID}/photo.jpg`,
+            mediaType: 'IMAGE',
+            sortOrder: 0,
+          },
+          {
+            storagePath: `capsules/${CAPSULE_ID}/video.mp4`,
+            mediaType: 'VIDEO',
+            sortOrder: 1,
+          },
+        ],
+      })
     )
 
-    expect(response.status).toBe(200)
-    await expect(response.json()).resolves.toEqual({
-      success: true,
-      message: {
-        id: 'message-3',
-        capsuleId: 'capsule-123',
-        mediaUrl: 'capsules/capsule-123/photo.jpg',
-        type: 'IMAGE',
-      },
-    })
-    expect(storageMocks.upload).toHaveBeenCalledWith(
-      expect.any(Buffer),
-      'photo.jpg',
-      'image/jpeg'
+    await expectErrorResponse(
+      response,
+      400,
+      'N\u00e3o \u00e9 poss\u00edvel misturar imagens e v\u00eddeos na mesma mensagem.'
     )
-    expect(prismaMocks.messageCreate).toHaveBeenCalledWith({
-      data: {
-        sender: 'Bob',
-        content: 'Te amo',
-        title: null,
-        mediaUrl: 'capsules/capsule-123/photo.jpg',
-        type: 'IMAGE',
-        capsuleId: 'capsule-123',
-      },
-    })
+    expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 when more than one video is provided', async () => {
+    const { response } = await submitUpload(
+      createUploadEntries({
+        assets: [
+          {
+            storagePath: `capsules/${CAPSULE_ID}/video-1.mp4`,
+            mediaType: 'VIDEO',
+            sortOrder: 0,
+          },
+          {
+            storagePath: `capsules/${CAPSULE_ID}/video-2.mp4`,
+            mediaType: 'VIDEO',
+            sortOrder: 1,
+          },
+        ],
+      })
+    )
+
+    await expectErrorResponse(
+      response,
+      400,
+      'Envie apenas 1 v\u00eddeo por mensagem.'
+    )
+    expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
+  })
+
+  it('returns 400 when media metadata is malformed', async () => {
+    const { response } = await submitUpload(
+      createUploadEntries({
+        assets: [
+          {
+            storagePath: `capsules/${CAPSULE_ID}/photo.jpg`,
+            mediaType: 'IMAGE',
+            sortOrder: 'not-a-number',
+          },
+        ],
+      })
+    )
+
+    await expectErrorResponse(
+      response,
+      400,
+      'Dados de m\u00eddia inv\u00e1lidos.'
+    )
+    expect(prismaMocks.messageCreate).not.toHaveBeenCalled()
   })
 
   it('returns 500 when an unexpected error happens during persistence', async () => {
     const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
     prismaMocks.messageCreate.mockRejectedValue(new Error('database offline'))
 
-    const request = createRequest([
-      ['mediaPath', 'capsules/capsule-123/photo.jpg'],
-      ['mediaType', 'IMAGE'],
-    ])
-
-    const response = await POST(
-      request as unknown as Parameters<typeof POST>[0],
-      { params: createParams() }
+    const { response } = await submitUpload(
+      createUploadEntries({
+        assets: [
+          {
+            storagePath: `capsules/${CAPSULE_ID}/photo.jpg`,
+            mediaType: 'IMAGE',
+            sortOrder: 0,
+          },
+        ],
+      })
     )
 
-    expect(response.status).toBe(500)
-    await expect(response.json()).resolves.toEqual({
-      error: 'Ocorreu um erro ao enviar sua mensagem. Tente novamente.',
-    })
+    await expectErrorResponse(
+      response,
+      500,
+      'Ocorreu um erro ao enviar sua mensagem. Tente novamente.'
+    )
     expect(consoleError).toHaveBeenCalledWith(
       'Upload error:',
       expect.any(Error)
