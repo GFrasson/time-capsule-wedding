@@ -60,11 +60,17 @@ describe('POST /api/capsules/[capsuleId]/upload/init', () => {
   })
 
   it('returns the presigned upload target when direct upload is available', async () => {
-    storageMocks.createPresignedUpload.mockResolvedValue({
-      uploadUrl: 'https://storage.example/upload',
-      storagePath: 'capsules/test/photo.jpg',
-      mediaType: 'IMAGE',
-    })
+    storageMocks.createPresignedUpload
+      .mockResolvedValueOnce({
+        uploadUrl: 'https://storage.example/upload',
+        storagePath: 'capsules/test/photo.jpg',
+        mediaType: 'IMAGE',
+      })
+      .mockResolvedValueOnce({
+        uploadUrl: 'https://storage.example/upload-thumbnail',
+        storagePath: 'capsules/test/photo-thumbnail.jpg',
+        mediaType: 'IMAGE',
+      })
 
     const request = new Request('http://localhost/api/capsules/test/upload/init', {
       method: 'POST',
@@ -86,7 +92,50 @@ describe('POST /api/capsules/[capsuleId]/upload/init', () => {
       uploadUrl: 'https://storage.example/upload',
       storagePath: 'capsules/test/photo.jpg',
       mediaType: 'IMAGE',
+      thumbnailUploadUrl: 'https://storage.example/upload-thumbnail',
+      thumbnailStoragePath: 'capsules/test/photo-thumbnail.jpg',
     })
+    expect(storageMocks.createPresignedUpload).toHaveBeenNthCalledWith(
+      1,
+      'photo.jpg',
+      'image/jpeg'
+    )
+    expect(storageMocks.createPresignedUpload).toHaveBeenNthCalledWith(
+      2,
+      'photo-thumbnail.jpg',
+      'image/jpeg'
+    )
+  })
+
+  it('does not request a thumbnail upload target for videos', async () => {
+    storageMocks.createPresignedUpload.mockResolvedValue({
+      uploadUrl: 'https://storage.example/upload-video',
+      storagePath: 'capsules/test/video.mp4',
+      mediaType: 'VIDEO',
+    })
+
+    const request = new Request('http://localhost/api/capsules/test/upload/init', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        originalFilename: 'video.mp4',
+        mimeType: 'video/mp4',
+        fileSize: 1024,
+      }),
+    })
+
+    const response = await POST(request)
+
+    expect(response.status).toBe(200)
+    await expect(response.json()).resolves.toEqual({
+      directUpload: true,
+      uploadUrl: 'https://storage.example/upload-video',
+      storagePath: 'capsules/test/video.mp4',
+      mediaType: 'VIDEO',
+    })
+    expect(storageMocks.createPresignedUpload).toHaveBeenCalledTimes(1)
   })
 
   it('returns 500 when creating the upload target throws', async () => {

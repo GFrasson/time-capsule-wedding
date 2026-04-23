@@ -23,10 +23,11 @@ model Message {
 }
 
 model MessageAsset {
-  id         String   @id @default(cuid())
-  storagePath String
-  sortOrder  Int
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  storagePath   String
+  thumbnailPath String?
+  sortOrder     Int
+  createdAt     DateTime @default(now())
 
   messageId String
   message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)

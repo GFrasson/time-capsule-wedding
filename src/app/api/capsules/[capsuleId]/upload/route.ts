@@ -16,6 +16,7 @@ type DirectUploadAsset = {
   mediaType: MessageMediaType
   sortOrder: number
   storagePath: string
+  thumbnailPath: string | null
 }
 
 function getStringEntries(values: FormDataEntryValue[]) {
@@ -32,20 +33,24 @@ function hasUniqueSortOrders(sortOrders: number[]) {
 
 function parseDirectUploadAssets(formData: FormData) {
   const mediaPaths = getStringEntries(formData.getAll('mediaPath'))
+  const thumbnailPaths = getStringEntries(formData.getAll('thumbnailPath'))
   const mediaTypes = getStringEntries(formData.getAll('mediaType'))
   const mediaOrders = getStringEntries(formData.getAll('mediaOrder'))
 
   if (
     mediaPaths.length !== mediaTypes.length ||
-    mediaPaths.length !== mediaOrders.length
+    mediaPaths.length !== mediaOrders.length ||
+    (thumbnailPaths.length > 0 && mediaPaths.length !== thumbnailPaths.length)
   ) {
     return null
   }
 
   const assets: DirectUploadAsset[] = []
+  const hasThumbnailPaths = thumbnailPaths.length === mediaPaths.length
 
   for (let index = 0; index < mediaPaths.length; index += 1) {
     const storagePath = mediaPaths[index]?.trim()
+    const thumbnailPath = hasThumbnailPaths ? thumbnailPaths[index]?.trim() : ''
     const mediaType = getMessageMediaType(mediaTypes[index] ?? '')
     const sortOrder = Number(mediaOrders[index])
 
@@ -55,6 +60,8 @@ function parseDirectUploadAssets(formData: FormData) {
 
     assets.push({
       storagePath,
+      thumbnailPath:
+        mediaType === 'IMAGE' && thumbnailPath ? thumbnailPath : null,
       mediaType,
       sortOrder,
     })
@@ -140,8 +147,9 @@ export async function POST(
         type: messageType,
         capsuleId,
         assets: {
-          create: assets.map(({ storagePath, sortOrder }) => ({
+          create: assets.map(({ storagePath, thumbnailPath, sortOrder }) => ({
             storagePath,
+            thumbnailPath,
             sortOrder,
           })),
         },

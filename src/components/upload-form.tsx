@@ -68,7 +68,13 @@ interface DirectUploadInitResponse {
   uploadUrl: string
   storagePath: string
   mediaType: 'IMAGE' | 'VIDEO'
+  thumbnailUploadUrl?: string
+  thumbnailStoragePath?: string
 }
+
+const THUMBNAIL_MAX_DIMENSION = 1200
+const THUMBNAIL_MIME_TYPE = 'image/jpeg'
+const THUMBNAIL_QUALITY = 0.78
 
 async function getResponseErrorMessage(response: Response, fallback: string) {
   const data = await response.json().catch(() => null)
@@ -78,6 +84,102 @@ async function getResponseErrorMessage(response: Response, fallback: string) {
   }
 
   return fallback
+}
+
+function getThumbnailDimensions(width: number, height: number) {
+  const longestSide = Math.max(width, height)
+
+  if (longestSide <= THUMBNAIL_MAX_DIMENSION) {
+    return { width, height }
+  }
+
+  const scale = THUMBNAIL_MAX_DIMENSION / longestSide
+
+  return {
+    width: Math.round(width * scale),
+    height: Math.round(height * scale),
+  }
+}
+
+function loadImageFromObjectUrl(objectUrl: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new window.Image()
+
+    image.onload = () => resolve(image)
+    image.onerror = () => reject(new Error('Could not load image thumbnail source.'))
+    image.src = objectUrl
+  })
+}
+
+async function createImageThumbnailBlob(file: File) {
+  const objectUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await loadImageFromObjectUrl(objectUrl)
+    const sourceWidth = image.naturalWidth
+    const sourceHeight = image.naturalHeight
+
+    if (!sourceWidth || !sourceHeight) {
+      return null
+    }
+
+    const dimensions = getThumbnailDimensions(sourceWidth, sourceHeight)
+    const canvas = document.createElement('canvas')
+    canvas.width = dimensions.width
+    canvas.height = dimensions.height
+
+    const context = canvas.getContext('2d')
+
+    if (!context) {
+      return null
+    }
+
+    context.drawImage(image, 0, 0, dimensions.width, dimensions.height)
+
+    return await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, THUMBNAIL_MIME_TYPE, THUMBNAIL_QUALITY)
+    })
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
+async function uploadThumbnailIfAvailable(
+  file: File,
+  initResult: DirectUploadInitResponse
+) {
+  if (
+    initResult.mediaType !== 'IMAGE' ||
+    !initResult.thumbnailUploadUrl ||
+    !initResult.thumbnailStoragePath
+  ) {
+    return null
+  }
+
+  try {
+    const thumbnailBlob = await createImageThumbnailBlob(file)
+
+    if (!thumbnailBlob) {
+      return null
+    }
+
+    const thumbnailResponse = await fetch(initResult.thumbnailUploadUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': THUMBNAIL_MIME_TYPE,
+      },
+      body: thumbnailBlob,
+    })
+
+    if (!thumbnailResponse.ok) {
+      throw new Error(`Could not upload thumbnail for ${file.name}.`)
+    }
+
+    return initResult.thumbnailStoragePath
+  } catch (error) {
+    console.warn('Thumbnail upload skipped:', error)
+    return null
+  }
 }
 
 export function UploadForm({ capsuleId }: UploadFormProps) {
@@ -152,8 +254,11 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
             throw new Error(`Não foi possível enviar ${file.name}.`)
           }
 
+          const thumbnailPath = await uploadThumbnailIfAvailable(file, initResult)
+
           return {
             mediaPath: initResult.storagePath,
+            thumbnailPath,
             mediaType: initResult.mediaType,
             order,
           }
@@ -170,6 +275,7 @@ export function UploadForm({ capsuleId }: UploadFormProps) {
         .sort((left, right) => left.order - right.order)
         .forEach((upload) => {
           formData.append('mediaPath', upload.mediaPath)
+          formData.append('thumbnailPath', upload.thumbnailPath ?? '')
           formData.append('mediaType', upload.mediaType)
           formData.append('mediaOrder', String(upload.order))
         })

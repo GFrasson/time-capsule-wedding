@@ -11,6 +11,7 @@ type UploadRouteRequest = {
 type RequestEntry = [string, string | File]
 type MediaAssetEntry = {
   storagePath: string
+  thumbnailPath?: string
   mediaType: string
   sortOrder: number | string
 }
@@ -22,6 +23,7 @@ type UploadEntryOptions = {
 }
 type CreatedAsset = {
   storagePath: string
+  thumbnailPath?: string | null
   sortOrder: number
 }
 type ExpectedMessageCreate = {
@@ -124,9 +126,10 @@ function appendOptionalEntry(
 function createMediaEntries(assets: MediaAssetEntry[]): RequestEntry[] {
   const entries: RequestEntry[] = []
 
-  for (const { storagePath, mediaType, sortOrder } of assets) {
+  for (const { storagePath, thumbnailPath, mediaType, sortOrder } of assets) {
     entries.push(
       ['mediaPath', storagePath],
+      ['thumbnailPath', thumbnailPath ?? ''],
       ['mediaType', mediaType],
       ['mediaOrder', String(sortOrder)]
     )
@@ -192,8 +195,9 @@ function expectMessageCreateCalledWith({
       type,
       capsuleId: CAPSULE_ID,
       assets: {
-        create: assets.map(({ storagePath, sortOrder }) => ({
+        create: assets.map(({ storagePath, thumbnailPath, sortOrder }) => ({
           storagePath,
+          thumbnailPath: thumbnailPath ?? null,
           sortOrder,
         })),
       },
@@ -319,11 +323,13 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
         {
           id: 'asset-1',
           storagePath: `capsules/${CAPSULE_ID}/photo-1.jpg`,
+          thumbnailPath: `capsules/${CAPSULE_ID}/photo-1-thumbnail.jpg`,
           sortOrder: 0,
         },
         {
           id: 'asset-2',
           storagePath: `capsules/${CAPSULE_ID}/photo-2.jpg`,
+          thumbnailPath: `capsules/${CAPSULE_ID}/photo-2-thumbnail.jpg`,
           sortOrder: 1,
         },
       ],
@@ -336,11 +342,13 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
         assets: [
           {
             storagePath: `capsules/${CAPSULE_ID}/photo-1.jpg`,
+            thumbnailPath: `capsules/${CAPSULE_ID}/photo-1-thumbnail.jpg`,
             mediaType: 'IMAGE',
             sortOrder: 0,
           },
           {
             storagePath: `capsules/${CAPSULE_ID}/photo-2.jpg`,
+            thumbnailPath: `capsules/${CAPSULE_ID}/photo-2-thumbnail.jpg`,
             mediaType: 'IMAGE',
             sortOrder: 1,
           },
@@ -357,10 +365,12 @@ describe('POST /api/capsules/[capsuleId]/upload', () => {
       assets: [
         {
           storagePath: `capsules/${CAPSULE_ID}/photo-1.jpg`,
+          thumbnailPath: `capsules/${CAPSULE_ID}/photo-1-thumbnail.jpg`,
           sortOrder: 0,
         },
         {
           storagePath: `capsules/${CAPSULE_ID}/photo-2.jpg`,
+          thumbnailPath: `capsules/${CAPSULE_ID}/photo-2-thumbnail.jpg`,
           sortOrder: 1,
         },
       ],
