@@ -35,6 +35,14 @@ async function getCapsules(page: number = 1, limit: number = 10): Promise<{ caps
     description: capsule.description ?? '',
     status: new Date() < capsule.unlockDate ? 'LOCKED' : 'UNLOCKED',
     mediaUrl: capsule.coverUrl ?? '',
+    media: capsule.coverUrl
+      ? [
+          {
+            id: `${capsule.id}-cover`,
+            url: capsule.coverUrl,
+          },
+        ]
+      : [],
     displayDate: capsule.unlockDate.toLocaleDateString('pt-BR',
       {
         month: 'short',
@@ -42,7 +50,7 @@ async function getCapsules(page: number = 1, limit: number = 10): Promise<{ caps
         year: 'numeric',
         timeZone: 'UTC'
       }),
-    type: 'image',
+    type: 'IMAGE',
     unlockDate: capsule.unlockDate,
   }))
 

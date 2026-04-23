@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  getMediaBatchValidationError,
+  getMessageMediaType,
   MAX_FILE_SIZE,
   getMediaValidationError,
   isAcceptedFileSize,
@@ -36,5 +38,41 @@ describe('upload-validation', () => {
 
   it('returns null for valid media files', () => {
     expect(getMediaValidationError('image/png', MAX_FILE_SIZE)).toBeNull()
+  })
+
+  it('classifies supported mime types and persisted message types', () => {
+    expect(getMessageMediaType('image/png')).toBe('IMAGE')
+    expect(getMessageMediaType('video/mp4')).toBe('VIDEO')
+    expect(getMessageMediaType('IMAGE')).toBe('IMAGE')
+    expect(getMessageMediaType('VIDEO')).toBe('VIDEO')
+  })
+
+  it('rejects more than 10 images in the same message', () => {
+    const error = getMediaBatchValidationError(
+      Array.from({ length: 11 }, () => 'image/png')
+    )
+
+    expect(error).toMatch(/10 imagens/)
+  })
+
+  it('rejects more than one video in the same message', () => {
+    const error = getMediaBatchValidationError(['video/mp4', 'video/webm'])
+
+    expect(error).toMatch(/1 vídeo/)
+  })
+
+  it('rejects mixed image and video selections', () => {
+    const error = getMediaBatchValidationError(['image/png', 'video/mp4'])
+
+    expect(error).toMatch(/misturar/)
+  })
+
+  it('accepts up to 10 images or one video in the same message', () => {
+    expect(
+      getMediaBatchValidationError(
+        Array.from({ length: 10 }, () => 'image/png')
+      )
+    ).toBeNull()
+    expect(getMediaBatchValidationError(['video/mp4'])).toBeNull()
   })
 })
