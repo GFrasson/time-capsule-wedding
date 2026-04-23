@@ -1,11 +1,11 @@
-# Spec: Migração para SaaS de sites de casamento
+# Spec: Migração para Micro-SaaS de sites de casamento
 
 ## Status
 Draft para revisão. Esta especificação não autoriza implementação ainda.
 
 ## Assumptions
 1. A aplicação continuará sendo web, baseada em Next.js App Router, React, TypeScript, Prisma e PostgreSQL.
-2. O produto alvo será um SaaS multi-tenant onde cada cliente pode criar e administrar um ou mais casamentos.
+2. O produto alvo será um Micro-Saas multi-tenant onde cada cliente pode criar e administrar um ou mais casamentos.
 3. A "cápsula do tempo" atual deixará de ser o produto inteiro e passará a ser um módulo dentro de um site de casamento.
 4. O público principal pagante será o casal, assessor ou responsável pelo casamento. Convidados poderão interagir sem precisar criar conta, salvo quando uma funcionalidade exigir identificação.
 5. O app ainda não está em produção, então renomeações, migrações estruturais e mudanças de rotas podem ser feitas com mais liberdade, desde que preservem os dados locais existentes.
@@ -13,7 +13,7 @@ Draft para revisão. Esta especificação não autoriza implementação ainda.
 7. O mercado inicial parece ser Brasil/português, mas a arquitetura deve permitir internacionalização futura.
 
 ## Objective
-Transformar o projeto de uma aplicação isolada de cápsula do tempo em uma plataforma SaaS completa para criação, administração e publicação de sites de casamento.
+Transformar o projeto de uma aplicação isolada de cápsula do tempo em uma plataforma Micro-Saas completa para criação, administração e publicação de sites de casamento.
 
 O produto deve permitir que um cliente:
 - crie uma conta;
@@ -24,7 +24,7 @@ O produto deve permitir que um cliente:
 - compartilhe links ou QR codes com convidados;
 - acompanhe uso, limites e pagamentos em uma área administrativa.
 
-O sucesso da migração significa que a base do projeto passa a ter um domínio claro de SaaS, com autenticação, isolamento por casamento, planos/entitlements, área administrativa e uma arquitetura preparada para novos módulos sem transformar a cápsula atual em gargalo de nomenclatura.
+O sucesso da migração significa que a base do projeto passa a ter um domínio claro de Micro-Saas, com autenticação, isolamento por casamento, planos/entitlements, área administrativa e uma arquitetura preparada para novos módulos sem transformar a cápsula atual em gargalo de nomenclatura.
 
 ## Current State
 Hoje o domínio principal é:
@@ -34,7 +34,7 @@ Hoje o domínio principal é:
 - rotas públicas em `/capsules/[capsuleId]`, `/capsules/[capsuleId]/upload` e `/capsules/[capsuleId]/share`.
 - proteção opcional por token global via query/cookie para todas as rotas `/capsules/*`.
 
-Limitações atuais para SaaS:
+Limitações atuais para Micro-Saas:
 - não existe `User`, `Account`, `Wedding`, `Membership`, `Plan`, `Subscription` ou `Tenant`;
 - a página inicial lista cápsulas, em vez de funcionar como marketing ou entrada do produto;
 - não há área administrativa para criação e edição de casamentos;
@@ -45,8 +45,8 @@ Limitações atuais para SaaS:
 - não há distinção clara entre módulos públicos, admin do cliente e operação interna da plataforma.
 
 ## Product Scope
-### SaaS Core
-O núcleo SaaS deve incluir:
+### Micro-SaaS Core
+O núcleo Micro-Saas deve incluir:
 - autenticação de usuários;
 - onboarding para criação do primeiro casamento;
 - dashboard administrativo;
@@ -84,7 +84,7 @@ Módulos esperados no produto:
 - QR codes e links de compartilhamento;
 - analytics simples de visitas, uploads e confirmações.
 
-O MVP da migração deve priorizar a estrutura SaaS e manter a cápsula do tempo funcionando como primeiro módulo migrado.
+O MVP da migração deve priorizar a estrutura Micro-Saas e manter a cápsula do tempo funcionando como primeiro módulo migrado.
 
 ## Personas
 ### Couple Owner
@@ -102,7 +102,7 @@ Usuário interno da plataforma. Pode dar suporte, analisar uso, revisar conteúd
 ## Target Domain Model
 ### Primary Entities
 `User`
-Representa uma pessoa autenticada no SaaS.
+Representa uma pessoa autenticada no Micro-Saas.
 
 `Wedding`
 Representa o tenant principal e o projeto administrável do cliente.
@@ -175,7 +175,7 @@ Evitar:
 ## Target Routes
 ### Marketing
 `/`
-Landing page pública do SaaS.
+Landing page pública do Micro-Saas.
 
 `/pricing`
 Planos e comparação.
