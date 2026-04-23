@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { PlusCircle, QrCode } from 'lucide-react'
 import prisma from '@/lib/prisma'
-import { getMediaAssetUrl } from '@/lib/media'
+import { getDisplayMediaAssetUrl } from '@/lib/media'
 import { MemoryCard, Post } from '@/components/memory-card'
 import { FormattedDate } from '@/components/formatted-date'
 import { TimelineItem, TimelineRoot } from '@/components/timeline'
@@ -25,6 +25,7 @@ interface MessageRecord {
   assets: Array<{
     id: string
     storagePath: string
+    thumbnailPath: string | null
   }>
 }
 
@@ -70,7 +71,7 @@ export default async function CapsuleDetailPage({
   const posts: Post[] = messages.map((message: MessageRecord) => {
     const media = message.assets.map((asset) => ({
       id: asset.id,
-      url: getMediaAssetUrl(asset.storagePath),
+      url: getDisplayMediaAssetUrl(asset),
     }))
 
     return {

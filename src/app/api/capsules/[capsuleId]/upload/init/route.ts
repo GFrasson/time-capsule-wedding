@@ -2,6 +2,17 @@ import { NextResponse } from 'next/server'
 import { storageProvider } from '@/lib/storage'
 import { getMediaValidationError } from '@/lib/upload-validation'
 
+const THUMBNAIL_MIME_TYPE = 'image/jpeg'
+
+function getThumbnailFilename(originalFilename: string) {
+  const filename = originalFilename.trim().split(/[\\/]/).pop() || 'image'
+  const extensionIndex = filename.lastIndexOf('.')
+  const nameWithoutExtension =
+    extensionIndex > 0 ? filename.slice(0, extensionIndex) : filename
+
+  return `${nameWithoutExtension}-thumbnail.jpg`
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -26,10 +37,23 @@ export async function POST(request: Request) {
       originalFilename,
       mimeType
     )
+    const thumbnailUploadTarget =
+      uploadTarget.mediaType === 'IMAGE'
+        ? await storageProvider.createPresignedUpload(
+            getThumbnailFilename(originalFilename),
+            THUMBNAIL_MIME_TYPE
+          )
+        : null
 
     return NextResponse.json({
       directUpload: true,
       ...uploadTarget,
+      ...(thumbnailUploadTarget
+        ? {
+            thumbnailUploadUrl: thumbnailUploadTarget.uploadUrl,
+            thumbnailStoragePath: thumbnailUploadTarget.storagePath,
+          }
+        : {}),
     })
   } catch (error) {
     console.error('Upload init error:', error)
